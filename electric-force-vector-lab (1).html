@@ -1,0 +1,1050 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Electric Force Vector Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #14160f;
+    --panel: #1d1f16;
+    --panel-raised: #262919;
+    --line: #34362a;
+    --amber: #ffb300;
+    --amber-dim: #7a5b12;
+    --cyan: #5fd8cf;
+    --green: #7fd77a;
+    --violet: #b389f0;
+    --rose: #ff8fa3;
+    --gold: #e0c341;
+    --red: #e0654e;
+    --blue: #4e8fe0;
+    --ink: #eae6d8;
+    --muted: #93957f;
+    --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-mono: 'JetBrains Mono', 'SFMono-Regular', Consolas, monospace;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  *, *::before, *::after { box-sizing: inherit; }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-ui);
+    min-height: 100%;
+    display: flex;
+    justify-content: center;
+    padding: 20px 14px 40px;
+  }
+  .rack { width: 100%; max-width: 1240px; }
+  .narrow-col { width: 100%; max-width: 660px; margin: 0 auto; }
+  .top-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+    gap: 12px;
+  }
+  .top-row .panel { margin-bottom: 0; }
+  @media (max-width: 860px) {
+    .top-row { grid-template-columns: 1fr; }
+  }
+  header { margin-bottom: 14px; }
+  header .kicker { font-size: 12.5px; color: var(--muted); letter-spacing: 0.02em; }
+  header h1 { font-size: 20px; font-weight: 700; margin: 2px 0 0; line-height: 1.3; }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 12px;
+  }
+  .screen-wrap {
+    background: #0b0c08;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 8px;
+  }
+  canvas { display: block; width: 100%; height: auto; touch-action: none; }
+  .section-label { font-size: 11.5px; color: var(--muted); margin: 0 0 10px; letter-spacing: 0.02em; }
+  .hint { font-size: 12px; color: var(--muted); margin: 10px 0 0; line-height: 1.5; }
+
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  .chip {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1.5px solid var(--line);
+    background: var(--panel-raised);
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .chip.selected { border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink) inset; }
+
+  .charge-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+    border-top: 1px solid var(--line);
+  }
+  .charge-row:first-child { border-top: none; }
+  .charge-swatch { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .charge-label { font-family: var(--font-mono); font-size: 12.5px; width: 20px; flex-shrink: 0; }
+  .charge-controls { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 0; }
+  .charge-controls .row1, .charge-controls .row2 { display: flex; align-items: center; gap: 8px; }
+  .sign-btn {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    width: 30px; height: 26px;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    background: var(--panel-raised);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .sign-btn.pos { color: var(--red); }
+  .sign-btn.neg { color: var(--blue); }
+  input[type="range"] {
+    flex: 1;
+    min-width: 60px;
+    -webkit-appearance: none;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--line);
+    outline: none;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: var(--amber); border: 2px solid #0b0c08; cursor: pointer;
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 16px; height: 16px; border-radius: 50%;
+    background: var(--amber); border: 2px solid #0b0c08; cursor: pointer;
+  }
+  .mag-value {
+    font-family: var(--font-mono); font-size: 12.5px; color: var(--amber);
+    width: 56px; text-align: right; flex-shrink: 0;
+  }
+  .pos-input {
+    font-family: var(--font-mono); font-size: 12px;
+    width: 54px; background: var(--panel-raised); color: var(--ink);
+    border: 1px solid var(--line); border-radius: 5px; padding: 3px 5px;
+  }
+  .pos-label { font-size: 11px; color: var(--muted); }
+  .remove-btn {
+    font-family: var(--font-mono); width: 24px; height: 24px; border-radius: 6px;
+    border: 1px solid var(--line); background: var(--panel-raised); color: var(--muted); cursor: pointer; flex-shrink: 0;
+  }
+  .remove-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  .transport { display: flex; gap: 8px; margin-top: 12px; }
+  .transport button, .add-btn {
+    flex: 1; padding: 9px 0; background: var(--panel-raised); border: 1px solid var(--line);
+    color: var(--ink); border-radius: 6px; font-family: var(--font-ui); font-weight: 600; font-size: 13px; cursor: pointer;
+  }
+  .transport button:disabled { opacity: 0.4; cursor: not-allowed; }
+  .toggle-row { display: flex; gap: 8px; margin-top: 10px; }
+  .toggle-btn {
+    flex: 1; padding: 8px 0; background: var(--panel-raised); border: 1px solid var(--line);
+    color: var(--muted); border-radius: 6px; font-family: var(--font-ui); font-size: 12.5px; cursor: pointer;
+  }
+  .toggle-btn.active { background: var(--amber-dim); border-color: var(--amber); color: var(--amber); }
+  .toggle-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .readouts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .readout { background: var(--panel-raised); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+  .readout .rlabel { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+  .readout .rvalue { font-family: var(--font-mono); font-size: 17px; color: var(--amber); text-shadow: 0 0 8px rgba(255,179,0,0.35); }
+  .readout.cyan .rvalue { color: var(--cyan); text-shadow: 0 0 8px rgba(95,216,207,0.35); }
+
+  table.recon { width: 100%; border-collapse: collapse; font-family: var(--font-mono); font-size: 12.5px; }
+  table.recon th { text-align: right; color: var(--muted); font-weight: 500; padding: 4px 6px; border-bottom: 1px solid var(--line); }
+  table.recon th:first-child, table.recon td:first-child { text-align: left; }
+  table.recon td { text-align: right; padding: 5px 6px; border-bottom: 1px solid var(--line); }
+  table.recon tr.sum-row td { color: var(--muted); font-weight: 600; }
+  table.recon tr.net-row td { color: var(--amber); font-weight: 700; border-top: 1.5px solid var(--line); }
+
+  .check-row { display: flex; justify-content: space-between; align-items: baseline; font-family: var(--font-mono); font-size: 12.5px; color: var(--muted); padding: 6px 0; border-top: 1px solid var(--line); }
+  .check-row:first-child { border-top: none; }
+  .check-row .ok { color: var(--green); }
+  .check-row .warn { color: var(--rose); }
+
+  .predict-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .predict-row label { font-size: 12.5px; width: 84px; flex-shrink: 0; }
+  .predict-row input { flex: 1; font-family: var(--font-mono); font-size: 13px; background: var(--panel-raised); color: var(--ink); border: 1px solid var(--line); border-radius: 5px; padding: 6px 8px; min-width: 0; }
+  .predict-row .err { font-family: var(--font-mono); font-size: 12.5px; width: 64px; text-align: right; flex-shrink: 0; }
+  .check-btn { width: 100%; padding: 9px 0; background: var(--amber-dim); border: 1px solid var(--amber); color: var(--amber); border-radius: 6px; font-family: var(--font-ui); font-weight: 600; font-size: 13px; cursor: pointer; margin-top: 4px; }
+</style>
+<div class="rack">
+  <header>
+    <div class="kicker">AP PHYSICS 2 · ELECTROSTATICS</div>
+    <h1>Net Electric Force: Components &amp; Reconstruction</h1>
+  </header>
+
+  <div class="top-row">
+    <div class="panel">
+      <div class="screen-wrap">
+        <canvas id="scene" width="900" height="900" aria-label="Source charges, test charge, and force vectors on a 2D plane"></canvas>
+      </div>
+      <p class="hint">Drag any charge — including the cyan test charge — to move it. Click a force arrow or its chip below to break it out into a clean triangle.</p>
+      <div class="chips" id="forceChips"></div>
+      <div class="toggle-row">
+        <button class="toggle-btn active" id="toggleComponents">Show F<sub>x</sub>/F<sub>y</sub> overlays</button>
+        <button class="toggle-btn active" id="toggleNet">Show net force</button>
+      </div>
+      <div class="transport">
+        <button id="stepModeBtn">▶ Step-through mode</button>
+        <button id="resetBtn">↺ Reset scene</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <p class="section-label">BREAKOUT — selected force resolved into components</p>
+      <div class="screen-wrap">
+        <canvas id="breakout" width="600" height="440" aria-label="Selected force vector broken into a right triangle of components"></canvas>
+      </div>
+      <div class="readouts" style="margin-top:10px;">
+        <div class="readout"><div class="rlabel">Force magnitude F</div><div class="rvalue" id="boF">—</div></div>
+        <div class="readout"><div class="rlabel">Angle θ (from +x axis)</div><div class="rvalue" id="boTheta">—</div></div>
+        <div class="readout cyan"><div class="rlabel">F_x = F·cos θ</div><div class="rvalue" id="boFx">—</div></div>
+        <div class="readout cyan"><div class="rlabel">F_y = F·sin θ</div><div class="rvalue" id="boFy">—</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="narrow-col">
+  <div class="panel" id="stepPanel" style="display:none;">
+    <p class="section-label">STEP-THROUGH MODE</p>
+    <p class="hint" id="stepText" style="margin-top:0;"></p>
+    <div class="transport">
+      <button id="stepBackBtn">◀ Back</button>
+      <button id="stepNextBtn">Next ▶</button>
+      <button id="stepExitBtn">Exit</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <p class="section-label">SOURCE CHARGES (2–4, magnitude in μC, position in meters)</p>
+    <div id="chargeRows"></div>
+    <button class="add-btn" id="addChargeBtn" style="margin-top:10px;">+ Add charge</button>
+    <div class="charge-row" style="margin-top:4px;">
+      <span class="charge-swatch" style="background:var(--ink); border:1.5px solid var(--cyan);"></span>
+      <span class="charge-label" style="color:var(--cyan);">Q</span>
+      <div class="charge-controls">
+        <div class="row1">
+          <button class="sign-btn" id="testSignBtn"></button>
+          <span class="pos-label">Test charge, fixed at 5.0 μC magnitude</span>
+        </div>
+        <div class="row2">
+          <span class="pos-label">x</span><input class="pos-input" id="testX" type="number" step="0.1" min="-3.1" max="3.1">
+          <span class="pos-label">y</span><input class="pos-input" id="testY" type="number" step="0.1" min="-3.1" max="3.1">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <p class="section-label">RECONSTRUCTION — add every component, then rebuild the resultant</p>
+    <table class="recon" id="reconTable">
+      <thead><tr><th>force</th><th>r (m)</th><th>F (N)</th><th>θ</th><th>Fx (N)</th><th>Fy (N)</th></tr></thead>
+      <tbody id="reconBody"></tbody>
+    </table>
+    <div class="screen-wrap" style="margin-top:10px;">
+      <canvas id="reconCanvas" width="600" height="440" aria-label="Tip-to-tail reconstruction of the net force from its components"></canvas>
+    </div>
+  </div>
+
+  <div class="panel">
+    <p class="section-label">YOUR PREDICTION — hand-calculate, then check</p>
+    <div class="predict-row"><label>Net F_x (N)</label><input type="number" step="any" id="predFx"><span class="err" id="errFx">—</span></div>
+    <div class="predict-row"><label>Net F_y (N)</label><input type="number" step="any" id="predFy"><span class="err" id="errFy">—</span></div>
+    <div class="predict-row"><label>|F_net| (N)</label><input type="number" step="any" id="predFmag"><span class="err" id="errFmag">—</span></div>
+    <div class="predict-row"><label>θ_net (°)</label><input type="number" step="any" id="predTheta"><span class="err" id="errTheta">—</span></div>
+    <button class="check-btn" id="checkBtn">Check my prediction</button>
+  </div>
+
+  <div class="panel">
+    <p class="section-label">MODEL CHECK — fixed reference case, computed live, not hard-coded</p>
+    <p class="hint" style="margin-top:0;">Reference (independent of the scene above): q₁ = +5.0 μC at (−1.00, 0.00) m, q₂ = +5.0 μC at (+1.00, 0.00) m, test charge +1.0 μC at (0.00, 1.50) m. By left–right symmetry the horizontal components must cancel exactly.</p>
+    <div class="check-row"><span>Net F_x (should be 0 by symmetry)</span><span id="checkFx" class="ok">—</span></div>
+    <div class="check-row"><span>Net F_y vs closed-form 2kqQb/r³, % error</span><span id="checkFy" class="ok">—</span></div>
+    <p class="hint">Idealizations in this model: point charges, Coulomb's law in vacuum (k = 8.99×10⁹ N·m²/C²), source charges are treated as fixed in place (the test charge's own field is idealized away and never moves or perturbs them), purely electrostatic — nothing here evolves in time, so every value updates the instant you drag a charge or move a slider. Force-arrow lengths on the main scene are scaled to fit the display and are not on a fixed N-per-pixel scale; read the numeric labels for actual magnitude.</p>
+  </div>
+  </div>
+</div>
+
+<script>
+/* ===========================================================
+   PHYSICS  (authoritative model — Coulomb's law + superposition,
+   point charges, vacuum, electrostatic. No relativistic, quantum,
+   dielectric, or dynamical effects are modeled.)
+=========================================================== */
+const K = 8.99e9;      // N·m^2/C^2, Coulomb's constant
+const MICRO = 1e-6;    // 1 uC in C
+const TEST_MAGNITUDE = 5.0; // uC, fixed magnitude of the test charge
+
+// Force exerted ON the test charge BY one source charge.
+// source: {x,y,q} in meters / uC.  test: {x,y,q} in meters / uC.
+// Returns magnitude (N), theta (rad, standard position from +x axis),
+// Fx, Fy (N), and r (m).
+function forceFromSource(source, test) {
+  const dx = test.x - source.x;
+  const dy = test.y - source.y;
+  const r = Math.sqrt(dx * dx + dy * dy) || 1e-9;
+  const rHatX = dx / r;
+  const rHatY = dy / r;
+  const qProduct = (source.q * MICRO) * (test.q * MICRO);
+  const magnitude = K * Math.abs(qProduct) / (r * r);
+  // like charges (qProduct > 0) repel: force on test points away from source, along rHat
+  // opposite charges (qProduct < 0) attract: force on test points toward source, along -rHat
+  const dirSign = qProduct >= 0 ? 1 : -1;
+  const Fx = magnitude * rHatX * dirSign;
+  const Fy = magnitude * rHatY * dirSign;
+  const theta = Math.atan2(Fy, Fx);
+  return { r, magnitude, theta, Fx, Fy };
+}
+
+// Superposition over every source charge acting on the test charge.
+function netForce(sources, test) {
+  const perCharge = sources.map(s => forceFromSource(s, test));
+  const netFx = perCharge.reduce((sum, f) => sum + f.Fx, 0);
+  const netFy = perCharge.reduce((sum, f) => sum + f.Fy, 0);
+  const netMagnitude = Math.sqrt(netFx * netFx + netFy * netFy);
+  const netTheta = Math.atan2(netFy, netFx);
+  return { perCharge, netFx, netFy, netMagnitude, netTheta };
+}
+
+// Fixed symmetric reference case for the MODEL CHECK panel and the
+// load-time self-test. Independent of anything the student edits.
+const REFERENCE = (function buildReference() {
+  const sources = [{ x: -1, y: 0, q: 5 }, { x: 1, y: 0, q: 5 }];
+  const test = { x: 0, y: 1.5, q: 1 };
+  const result = netForce(sources, test);
+  const r = Math.sqrt(1 * 1 + 1.5 * 1.5);
+  const singleF = K * (5 * MICRO) * (1 * MICRO) / (r * r);
+  const expectedFy = 2 * singleF * (1.5 / r); // horizontal components cancel by symmetry
+  return { sources, test, result, expectedFy };
+})();
+
+(function selfTest() {
+  console.assert(Math.abs(REFERENCE.result.netFx) < 1e-9,
+    'PHYSICS SELF-TEST FAILED: reference net Fx should be 0 by symmetry, got ' + REFERENCE.result.netFx);
+  console.assert(Math.abs(REFERENCE.result.netFy - REFERENCE.expectedFy) < 1e-9,
+    'PHYSICS SELF-TEST FAILED: reference net Fy mismatch, got ' + REFERENCE.result.netFy + ' expected ' + REFERENCE.expectedFy);
+})();
+
+/* ===========================================================
+   STATE
+=========================================================== */
+const VECTOR_COLORS = ['#7fd77a', '#b389f0', '#ff8fa3', '#e0c341']; // green, violet, rose, gold
+const DEFAULT_SLOTS = [
+  { x: -1.5, y: 1.0 }, { x: 1.5, y: 1.0 }, { x: 0, y: -1.8 }, { x: -1.8, y: -1.0 }
+];
+let nextId = 0;
+
+const state = {
+  charges: [
+    { id: nextId++, x: -1.5, y: 1.0, magnitude: 8, sign: 1 },
+    { id: nextId++, x: 1.5, y: 1.0, magnitude: 6, sign: -1 },
+    { id: nextId++, x: 0, y: -1.8, magnitude: 10, sign: 1 }
+  ],
+  test: { x: 0, y: 0, sign: 1 },
+  selectedIndex: 0,
+  showComponents: true,
+  showNet: true,
+  stepMode: false,
+  stepIndex: 0, // 0 = vectors only, 1 = + components, 2 = + net
+  drag: null // { type: 'charge'|'test', id }
+};
+
+function chargeQ(c) { return c.magnitude * c.sign; }
+
+/* ===========================================================
+   DOM REFS
+=========================================================== */
+const sceneCanvas = document.getElementById('scene');
+const sceneCtx = sceneCanvas.getContext('2d');
+const breakoutCanvas = document.getElementById('breakout');
+const breakoutCtx = breakoutCanvas.getContext('2d');
+const reconCanvas = document.getElementById('reconCanvas');
+const reconCtx = reconCanvas.getContext('2d');
+
+const chargeRowsEl = document.getElementById('chargeRows');
+const forceChipsEl = document.getElementById('forceChips');
+const addChargeBtn = document.getElementById('addChargeBtn');
+const toggleComponentsBtn = document.getElementById('toggleComponents');
+const toggleNetBtn = document.getElementById('toggleNet');
+const stepModeBtn = document.getElementById('stepModeBtn');
+const stepPanel = document.getElementById('stepPanel');
+const stepText = document.getElementById('stepText');
+const stepBackBtn = document.getElementById('stepBackBtn');
+const stepNextBtn = document.getElementById('stepNextBtn');
+const stepExitBtn = document.getElementById('stepExitBtn');
+const resetBtn = document.getElementById('resetBtn');
+
+const testSignBtn = document.getElementById('testSignBtn');
+const testXInput = document.getElementById('testX');
+const testYInput = document.getElementById('testY');
+
+const boF = document.getElementById('boF');
+const boTheta = document.getElementById('boTheta');
+const boFx = document.getElementById('boFx');
+const boFy = document.getElementById('boFy');
+
+const reconBody = document.getElementById('reconBody');
+
+const predFx = document.getElementById('predFx');
+const predFy = document.getElementById('predFy');
+const predFmag = document.getElementById('predFmag');
+const predTheta = document.getElementById('predTheta');
+const errFx = document.getElementById('errFx');
+const errFy = document.getElementById('errFy');
+const errFmag = document.getElementById('errFmag');
+const errTheta = document.getElementById('errTheta');
+const checkBtn = document.getElementById('checkBtn');
+
+const checkFxEl = document.getElementById('checkFx');
+const checkFyEl = document.getElementById('checkFy');
+
+/* ===========================================================
+   FORMATTING HELPERS
+=========================================================== */
+function formatForce(n) {
+  if (Math.abs(n) < 0.01) return (n * 1000).toFixed(2) + ' mN';
+  return n.toFixed(3) + ' N';
+}
+function formatDeg(rad) {
+  let deg = rad * 180 / Math.PI;
+  return deg.toFixed(1) + '°';
+}
+function formatM(n) { return n.toFixed(2) + ' m'; }
+
+/* ===========================================================
+   COORDINATE MAPPING (world meters <-> canvas pixels)
+=========================================================== */
+const WORLD_HALF_RANGE = 3.2; // meters shown each direction from origin
+
+function worldToPx(x, y, size) {
+  const scale = size / (2 * WORLD_HALF_RANGE);
+  return { px: size / 2 + x * scale, py: size / 2 - y * scale, scale };
+}
+function pxToWorld(px, py, size) {
+  const scale = size / (2 * WORLD_HALF_RANGE);
+  return { x: (px - size / 2) / scale, y: (size / 2 - py) / scale };
+}
+function chargeRadiusPx(magnitude) {
+  return 12 + 9 * Math.sqrt(magnitude / 10);
+}
+
+/* ===========================================================
+   CHARGE ROW UI (rebuilt only on add/remove)
+=========================================================== */
+function rebuildChargeRows() {
+  chargeRowsEl.innerHTML = '';
+  state.charges.forEach((c, idx) => {
+    const color = VECTOR_COLORS[idx % VECTOR_COLORS.length];
+    const row = document.createElement('div');
+    row.className = 'charge-row';
+    row.innerHTML = `
+      <span class="charge-swatch" style="background:${color};"></span>
+      <span class="charge-label" style="color:${color};">q${idx + 1}</span>
+      <div class="charge-controls">
+        <div class="row1">
+          <button class="sign-btn ${c.sign > 0 ? 'pos' : 'neg'}" data-role="sign">${c.sign > 0 ? '+' : '−'}</button>
+          <input type="range" data-role="mag" min="1" max="20" step="0.5" value="${c.magnitude}">
+          <span class="mag-value" data-role="magval">${c.magnitude.toFixed(1)} μC</span>
+        </div>
+        <div class="row2">
+          <span class="pos-label">x</span><input class="pos-input" data-role="x" type="number" step="0.1" min="-3.1" max="3.1" value="${c.x.toFixed(2)}">
+          <span class="pos-label">y</span><input class="pos-input" data-role="y" type="number" step="0.1" min="-3.1" max="3.1" value="${c.y.toFixed(2)}">
+        </div>
+      </div>
+      <button class="remove-btn" data-role="remove">×</button>
+    `;
+    const signBtn = row.querySelector('[data-role="sign"]');
+    const magInput = row.querySelector('[data-role="mag"]');
+    const magVal = row.querySelector('[data-role="magval"]');
+    const xInput = row.querySelector('[data-role="x"]');
+    const yInput = row.querySelector('[data-role="y"]');
+    const removeBtn = row.querySelector('[data-role="remove"]');
+
+    signBtn.addEventListener('click', () => {
+      c.sign *= -1;
+      signBtn.textContent = c.sign > 0 ? '+' : '−';
+      signBtn.classList.toggle('pos', c.sign > 0);
+      signBtn.classList.toggle('neg', c.sign < 0);
+      update();
+    });
+    magInput.addEventListener('input', () => {
+      c.magnitude = parseFloat(magInput.value);
+      magVal.textContent = c.magnitude.toFixed(1) + ' μC';
+      update();
+    });
+    xInput.addEventListener('input', () => {
+      const v = parseFloat(xInput.value);
+      if (!isNaN(v)) c.x = Math.max(-3.1, Math.min(3.1, v));
+      update();
+    });
+    yInput.addEventListener('input', () => {
+      const v = parseFloat(yInput.value);
+      if (!isNaN(v)) c.y = Math.max(-3.1, Math.min(3.1, v));
+      update();
+    });
+    removeBtn.addEventListener('click', () => {
+      if (state.charges.length <= 2) return;
+      const i = state.charges.indexOf(c);
+      state.charges.splice(i, 1);
+      if (state.selectedIndex >= state.charges.length) state.selectedIndex = state.charges.length - 1;
+      rebuildChargeRows();
+      update();
+    });
+    removeBtn.disabled = state.charges.length <= 2;
+
+    chargeRowsEl.appendChild(row);
+  });
+}
+
+addChargeBtn.addEventListener('click', () => {
+  if (state.charges.length >= 4) return;
+  const slot = DEFAULT_SLOTS[state.charges.length] || { x: 0, y: 0 };
+  state.charges.push({ id: nextId++, x: slot.x, y: slot.y, magnitude: 8, sign: 1 });
+  rebuildChargeRows();
+  update();
+});
+
+/* ===========================================================
+   TEST CHARGE CONTROLS
+=========================================================== */
+function syncTestControls() {
+  testSignBtn.textContent = state.test.sign > 0 ? '+' : '−';
+  testSignBtn.className = 'sign-btn ' + (state.test.sign > 0 ? 'pos' : 'neg');
+  testXInput.value = state.test.x.toFixed(2);
+  testYInput.value = state.test.y.toFixed(2);
+}
+testSignBtn.addEventListener('click', () => { state.test.sign *= -1; syncTestControls(); update(); });
+testXInput.addEventListener('input', () => {
+  const v = parseFloat(testXInput.value);
+  if (!isNaN(v)) state.test.x = Math.max(-3.1, Math.min(3.1, v));
+  update();
+});
+testYInput.addEventListener('input', () => {
+  const v = parseFloat(testYInput.value);
+  if (!isNaN(v)) state.test.y = Math.max(-3.1, Math.min(3.1, v));
+  update();
+});
+
+/* ===========================================================
+   LAYER TOGGLES + STEP MODE
+=========================================================== */
+toggleComponentsBtn.addEventListener('click', () => {
+  if (state.stepMode) return;
+  state.showComponents = !state.showComponents;
+  toggleComponentsBtn.classList.toggle('active', state.showComponents);
+  update();
+});
+toggleNetBtn.addEventListener('click', () => {
+  if (state.stepMode) return;
+  state.showNet = !state.showNet;
+  toggleNetBtn.classList.toggle('active', state.showNet);
+  update();
+});
+
+const STEP_LABELS = [
+  'Step 1 of 3 — just the raw force vectors from each source charge on the test charge.',
+  'Step 2 of 3 — each vector broken into its Fₓ and Fᵧ components.',
+  'Step 3 of 3 — components summed and the net force reconstructed.'
+];
+function applyStep() {
+  state.showComponents = state.stepIndex >= 1;
+  state.showNet = state.stepIndex >= 2;
+  toggleComponentsBtn.classList.toggle('active', state.showComponents);
+  toggleNetBtn.classList.toggle('active', state.showNet);
+  stepText.textContent = STEP_LABELS[state.stepIndex];
+  stepBackBtn.disabled = state.stepIndex === 0;
+  stepNextBtn.disabled = state.stepIndex === 2;
+  update();
+}
+stepModeBtn.addEventListener('click', () => {
+  state.stepMode = true;
+  state.stepIndex = 0;
+  stepPanel.style.display = 'block';
+  toggleComponentsBtn.disabled = true;
+  toggleNetBtn.disabled = true;
+  applyStep();
+});
+stepBackBtn.addEventListener('click', () => { if (state.stepIndex > 0) { state.stepIndex--; applyStep(); } });
+stepNextBtn.addEventListener('click', () => { if (state.stepIndex < 2) { state.stepIndex++; applyStep(); } });
+stepExitBtn.addEventListener('click', () => {
+  state.stepMode = false;
+  stepPanel.style.display = 'none';
+  state.showComponents = true;
+  state.showNet = true;
+  toggleComponentsBtn.disabled = false;
+  toggleNetBtn.disabled = false;
+  toggleComponentsBtn.classList.add('active');
+  toggleNetBtn.classList.add('active');
+  update();
+});
+
+resetBtn.addEventListener('click', () => {
+  state.charges = [
+    { id: nextId++, x: -1.5, y: 1.0, magnitude: 8, sign: 1 },
+    { id: nextId++, x: 1.5, y: 1.0, magnitude: 6, sign: -1 },
+    { id: nextId++, x: 0, y: -1.8, magnitude: 10, sign: 1 }
+  ];
+  state.test = { x: 0, y: 0, sign: 1 };
+  state.selectedIndex = 0;
+  state.showComponents = true;
+  state.showNet = true;
+  toggleComponentsBtn.classList.add('active');
+  toggleNetBtn.classList.add('active');
+  toggleComponentsBtn.disabled = false;
+  toggleNetBtn.disabled = false;
+  state.stepMode = false;
+  stepPanel.style.display = 'none';
+  rebuildChargeRows();
+  syncTestControls();
+  update();
+});
+
+/* ===========================================================
+   MAIN SCENE — drag interaction
+=========================================================== */
+function hitTestCanvas(clientX, clientY) {
+  const rect = sceneCanvas.getBoundingClientRect();
+  const px = (clientX - rect.left) / rect.width * sceneCanvas.width;
+  const py = (clientY - rect.top) / rect.height * sceneCanvas.height;
+  // test charge first (usually smaller / on top of visual stack when centered)
+  const t = worldToPx(state.test.x, state.test.y, sceneCanvas.width);
+  if (Math.hypot(px - t.px, py - t.py) < 16) return { type: 'test' };
+  for (let i = 0; i < state.charges.length; i++) {
+    const c = state.charges[i];
+    const p = worldToPx(c.x, c.y, sceneCanvas.width);
+    const r = chargeRadiusPx(c.magnitude);
+    if (Math.hypot(px - p.px, py - p.py) < r + 4) return { type: 'charge', index: i };
+  }
+  return null;
+}
+
+// distance from point to segment, for selecting a force vector by clicking its arrow
+function distToSegment(px, py, x1, y1, x2, y2) {
+  const dx = x2 - x1, dy = y2 - y1;
+  const lenSq = dx * dx + dy * dy;
+  let t = lenSq > 0 ? ((px - x1) * dx + (py - y1) * dy) / lenSq : 0;
+  t = Math.max(0, Math.min(1, t));
+  const cx = x1 + t * dx, cy = y1 + t * dy;
+  return Math.hypot(px - cx, py - cy);
+}
+
+function hitTestVector(clientX, clientY) {
+  const rect = sceneCanvas.getBoundingClientRect();
+  const px = (clientX - rect.left) / rect.width * sceneCanvas.width;
+  const py = (clientY - rect.top) / rect.height * sceneCanvas.height;
+  const forces = computeForces();
+  const t = worldToPx(state.test.x, state.test.y, sceneCanvas.width);
+  const pxPerN = displayScale(forces);
+  for (let i = 0; i < forces.perCharge.length; i++) {
+    const f = forces.perCharge[i];
+    const tip = { px: t.px + f.Fx * pxPerN, py: t.py - f.Fy * pxPerN };
+    if (distToSegment(px, py, t.px, t.py, tip.px, tip.py) < 10) return i;
+  }
+  return null;
+}
+
+let pointerMoved = false;
+sceneCanvas.addEventListener('pointerdown', (e) => {
+  pointerMoved = false;
+  const hit = hitTestCanvas(e.clientX, e.clientY);
+  if (hit) state.drag = hit;
+});
+sceneCanvas.addEventListener('pointermove', (e) => {
+  if (!state.drag) return;
+  pointerMoved = true;
+  const rect = sceneCanvas.getBoundingClientRect();
+  const px = (e.clientX - rect.left) / rect.width * sceneCanvas.width;
+  const py = (e.clientY - rect.top) / rect.height * sceneCanvas.height;
+  const w = pxToWorld(px, py, sceneCanvas.width);
+  const cx = Math.max(-3.1, Math.min(3.1, w.x));
+  const cy = Math.max(-3.1, Math.min(3.1, w.y));
+  if (state.drag.type === 'test') {
+    state.test.x = cx; state.test.y = cy; syncTestControls();
+  } else {
+    const c = state.charges[state.drag.index];
+    c.x = cx; c.y = cy;
+    const row = chargeRowsEl.children[state.drag.index];
+    if (row) {
+      row.querySelector('[data-role="x"]').value = cx.toFixed(2);
+      row.querySelector('[data-role="y"]').value = cy.toFixed(2);
+    }
+  }
+  update();
+});
+window.addEventListener('pointerup', (e) => {
+  if (state.drag && !pointerMoved) {
+    // treat as a click: try to select a force vector
+    const idx = hitTestVector(e.clientX, e.clientY);
+    if (idx !== null) { state.selectedIndex = idx; update(); }
+  }
+  state.drag = null;
+});
+
+/* ===========================================================
+   FORCE CHIPS (selection)
+=========================================================== */
+function rebuildChips() {
+  forceChipsEl.innerHTML = '';
+  state.charges.forEach((c, idx) => {
+    const color = VECTOR_COLORS[idx % VECTOR_COLORS.length];
+    const chip = document.createElement('button');
+    chip.className = 'chip' + (state.selectedIndex === idx ? ' selected' : '');
+    chip.style.color = color;
+    chip.textContent = 'F' + (idx + 1);
+    chip.addEventListener('click', () => { state.selectedIndex = idx; update(); });
+    forceChipsEl.appendChild(chip);
+  });
+}
+
+/* ===========================================================
+   COMPUTE + DISPLAY SCALE
+=========================================================== */
+function computeForces() {
+  const sources = state.charges.map(c => ({ x: c.x, y: c.y, q: chargeQ(c) }));
+  const test = { x: state.test.x, y: state.test.y, q: TEST_MAGNITUDE * state.test.sign };
+  return netForce(sources, test);
+}
+function displayScale(forces) {
+  const maxF = Math.max(...forces.perCharge.map(f => f.magnitude), forces.netMagnitude, 1e-9);
+  return 210 / maxF; // px per Newton, chosen so the largest arrow fits the scene
+}
+
+/* ===========================================================
+   RENDER — MAIN SCENE
+=========================================================== */
+function drawArrow(ctx, x1, y1, x2, y2, color, width) {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width;
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+  const angle = Math.atan2(y2 - y1, x2 - x1);
+  const headLen = 8 + width;
+  ctx.beginPath();
+  ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - headLen * Math.cos(angle - Math.PI / 6), y2 - headLen * Math.sin(angle - Math.PI / 6));
+  ctx.lineTo(x2 - headLen * Math.cos(angle + Math.PI / 6), y2 - headLen * Math.sin(angle + Math.PI / 6));
+  ctx.closePath();
+  ctx.fillStyle = color;
+  ctx.fill();
+}
+
+function drawScene(forces) {
+  const size = sceneCanvas.width;
+  sceneCtx.clearRect(0, 0, size, size);
+
+  // grid
+  sceneCtx.strokeStyle = '#22241a';
+  sceneCtx.lineWidth = 1;
+  for (let g = -3; g <= 3; g++) {
+    const p1 = worldToPx(g, -WORLD_HALF_RANGE, size);
+    const p2 = worldToPx(g, WORLD_HALF_RANGE, size);
+    sceneCtx.beginPath(); sceneCtx.moveTo(p1.px, p1.py); sceneCtx.lineTo(p2.px, p2.py); sceneCtx.stroke();
+    const p3 = worldToPx(-WORLD_HALF_RANGE, g, size);
+    const p4 = worldToPx(WORLD_HALF_RANGE, g, size);
+    sceneCtx.beginPath(); sceneCtx.moveTo(p3.px, p3.py); sceneCtx.lineTo(p4.px, p4.py); sceneCtx.stroke();
+  }
+  // axes
+  sceneCtx.strokeStyle = '#3a3d2c';
+  sceneCtx.lineWidth = 1.5;
+  const ax1 = worldToPx(-WORLD_HALF_RANGE, 0, size), ax2 = worldToPx(WORLD_HALF_RANGE, 0, size);
+  sceneCtx.beginPath(); sceneCtx.moveTo(ax1.px, ax1.py); sceneCtx.lineTo(ax2.px, ax2.py); sceneCtx.stroke();
+  const ay1 = worldToPx(0, -WORLD_HALF_RANGE, size), ay2 = worldToPx(0, WORLD_HALF_RANGE, size);
+  sceneCtx.beginPath(); sceneCtx.moveTo(ay1.px, ay1.py); sceneCtx.lineTo(ay2.px, ay2.py); sceneCtx.stroke();
+
+  const t = worldToPx(state.test.x, state.test.y, size);
+  const pxPerN = displayScale(forces);
+
+  // per-charge: source dot + force vector + optional component overlay + angle arc
+  forces.perCharge.forEach((f, idx) => {
+    const c = state.charges[idx];
+    const color = VECTOR_COLORS[idx % VECTOR_COLORS.length];
+    const p = worldToPx(c.x, c.y, size);
+    const r = chargeRadiusPx(c.magnitude);
+
+    // source charge
+    sceneCtx.beginPath();
+    sceneCtx.arc(p.px, p.py, r, 0, Math.PI * 2);
+    sceneCtx.fillStyle = c.sign > 0 ? '#e0654e' : '#4e8fe0';
+    sceneCtx.fill();
+    sceneCtx.lineWidth = 2.5;
+    sceneCtx.strokeStyle = color;
+    sceneCtx.stroke();
+    sceneCtx.fillStyle = '#0b0c08';
+    sceneCtx.font = '700 13px Inter, sans-serif';
+    sceneCtx.textAlign = 'center';
+    sceneCtx.textBaseline = 'middle';
+    sceneCtx.fillText(c.sign > 0 ? '+' : '−', p.px, p.py + 1);
+    sceneCtx.fillStyle = color;
+    sceneCtx.font = '600 11px "JetBrains Mono", monospace';
+    sceneCtx.fillText('q' + (idx + 1), p.px, p.py - r - 9);
+
+    // force vector from test charge
+    const tip = { px: t.px + f.Fx * pxPerN, py: t.py - f.Fy * pxPerN };
+    const isSelected = state.selectedIndex === idx;
+    drawArrow(sceneCtx, t.px, t.py, tip.px, tip.py, color, isSelected ? 3 : 2);
+
+    if (state.showComponents) {
+      // dashed component legs: horizontal then vertical from the test charge
+      sceneCtx.strokeStyle = color;
+      sceneCtx.globalAlpha = 0.55;
+      sceneCtx.lineWidth = 1.5;
+      sceneCtx.setLineDash([5, 4]);
+      sceneCtx.beginPath();
+      sceneCtx.moveTo(t.px, t.py); sceneCtx.lineTo(tip.px, t.py);
+      sceneCtx.lineTo(tip.px, tip.py);
+      sceneCtx.stroke();
+      sceneCtx.setLineDash([]);
+      sceneCtx.globalAlpha = 1;
+
+      // angle arc from +x reference at the test charge (short way round)
+      const arcRadius = 26 + idx * 8;
+      const canvasTheta = -f.theta; // canvas angles sweep clockwise on screen
+      sceneCtx.strokeStyle = color;
+      sceneCtx.globalAlpha = 0.8;
+      sceneCtx.lineWidth = 1.5;
+      sceneCtx.beginPath();
+      sceneCtx.arc(t.px, t.py, arcRadius, 0, canvasTheta, canvasTheta < 0);
+      sceneCtx.stroke();
+      sceneCtx.globalAlpha = 1;
+    }
+  });
+
+  // net force vector
+  if (state.showNet) {
+    const netTip = { px: t.px + forces.netFx * pxPerN, py: t.py - forces.netFy * pxPerN };
+    drawArrow(sceneCtx, t.px, t.py, netTip.px, netTip.py, '#ffb300', 3.5);
+    sceneCtx.fillStyle = '#ffb300';
+    sceneCtx.font = '700 12px "JetBrains Mono", monospace';
+    sceneCtx.textAlign = 'left';
+    sceneCtx.fillText('F_net', netTip.px + 8, netTip.py);
+  }
+
+  // test charge marker (drawn last, on top)
+  sceneCtx.beginPath();
+  sceneCtx.arc(t.px, t.py, 14, 0, Math.PI * 2);
+  sceneCtx.fillStyle = '#eae6d8';
+  sceneCtx.fill();
+  sceneCtx.lineWidth = 2.5;
+  sceneCtx.strokeStyle = '#5fd8cf';
+  sceneCtx.stroke();
+  sceneCtx.fillStyle = '#0b0c08';
+  sceneCtx.font = '700 13px Inter, sans-serif';
+  sceneCtx.textAlign = 'center';
+  sceneCtx.textBaseline = 'middle';
+  sceneCtx.fillText(state.test.sign > 0 ? '+' : '−', t.px, t.py + 1);
+  sceneCtx.fillStyle = '#5fd8cf';
+  sceneCtx.font = '600 11px "JetBrains Mono", monospace';
+  sceneCtx.fillText('Q (test)', t.px, t.py - 24);
+}
+
+/* ===========================================================
+   RENDER — BREAKOUT TRIANGLE (selected force, isolated & auto-scaled)
+=========================================================== */
+function drawBreakout(forces) {
+  const w = breakoutCanvas.width, h = breakoutCanvas.height;
+  breakoutCtx.clearRect(0, 0, w, h);
+  const idx = state.selectedIndex;
+  const f = forces.perCharge[idx];
+  if (!f) return;
+  const color = VECTOR_COLORS[idx % VECTOR_COLORS.length];
+
+  // Origin re-centers per quadrant: the leg that's about to be drawn always
+  // gets the "long" side of the canvas, so Fx<0 and/or Fy<0 vectors get the
+  // same breathing room as the Quadrant-1 case instead of running off screen.
+  const signX = f.Fx >= 0 ? 1 : -1;
+  const signY = f.Fy >= 0 ? 1 : -1; // canvas-up = positive Fy
+  const originX = w * (signX >= 0 ? 0.28 : 0.72);
+  const originY = h * (signY >= 0 ? 0.72 : 0.28);
+  const maxSpan = Math.min(w, h) * 0.55;
+  const scale = maxSpan / Math.max(Math.abs(f.Fx), Math.abs(f.Fy), 1e-9);
+  const fx = f.Fx * scale, fy = f.Fy * scale;
+
+  // reference axes (dashed) — short side (0.18) stays behind the origin in the
+  // vector's direction of travel, long side (0.62) stays ahead of it
+  const axisNearX = signX >= 0 ? w * 0.18 : w * 0.62;
+  const axisFarX = signX >= 0 ? w * 0.62 : w * 0.18;
+  const axisNearY = signY >= 0 ? h * 0.18 : h * 0.62;
+  const axisFarY = signY >= 0 ? h * 0.62 : h * 0.18;
+  breakoutCtx.strokeStyle = '#3a3d2c';
+  breakoutCtx.setLineDash([4, 4]);
+  breakoutCtx.lineWidth = 1;
+  breakoutCtx.beginPath();
+  breakoutCtx.moveTo(originX - axisNearX, originY); breakoutCtx.lineTo(originX + axisFarX, originY);
+  breakoutCtx.moveTo(originX, originY + axisNearY); breakoutCtx.lineTo(originX, originY - axisFarY);
+  breakoutCtx.stroke();
+  breakoutCtx.setLineDash([]);
+
+  // legs: horizontal (Fx) then vertical (Fy) — dashed, matching main-scene overlay
+  breakoutCtx.strokeStyle = color;
+  breakoutCtx.globalAlpha = 0.6;
+  breakoutCtx.lineWidth = 2;
+  breakoutCtx.setLineDash([6, 5]);
+  breakoutCtx.beginPath();
+  breakoutCtx.moveTo(originX, originY); breakoutCtx.lineTo(originX + fx, originY);
+  breakoutCtx.lineTo(originX + fx, originY - fy);
+  breakoutCtx.stroke();
+  breakoutCtx.setLineDash([]);
+  breakoutCtx.globalAlpha = 1;
+
+  // hypotenuse (the actual force vector)
+  drawArrow(breakoutCtx, originX, originY, originX + fx, originY - fy, color, 3);
+
+  // angle arc + label at origin (short way round)
+  const boCanvasTheta = -f.theta;
+  breakoutCtx.strokeStyle = color;
+  breakoutCtx.lineWidth = 1.5;
+  breakoutCtx.beginPath();
+  breakoutCtx.arc(originX, originY, 30, 0, boCanvasTheta, boCanvasTheta < 0);
+  breakoutCtx.stroke();
+
+  breakoutCtx.fillStyle = '#eae6d8';
+  breakoutCtx.font = '600 13px Inter, sans-serif';
+  breakoutCtx.textAlign = signX >= 0 ? 'left' : 'right';
+  breakoutCtx.fillText('θ = ' + formatDeg(f.theta), originX + (signX >= 0 ? 40 : -40), originY + (signY >= 0 ? -14 : 22));
+
+  breakoutCtx.fillStyle = color;
+  breakoutCtx.font = '600 12px "JetBrains Mono", monospace';
+  const midX = originX + fx / 2, midY = originY;
+  breakoutCtx.textAlign = 'center';
+  breakoutCtx.fillText('Fx', midX, midY + (fy >= 0 ? 18 : -12));
+  breakoutCtx.textAlign = fx >= 0 ? 'left' : 'right';
+  breakoutCtx.fillText('Fy', originX + fx + (fx >= 0 ? 8 : -8), originY - fy / 2);
+
+  boF.textContent = formatForce(f.magnitude);
+  boTheta.textContent = formatDeg(f.theta);
+  boFx.textContent = formatForce(f.Fx);
+  boFy.textContent = formatForce(f.Fy);
+}
+
+/* ===========================================================
+   RENDER — RECONSTRUCTION (table + tip-to-tail canvas)
+=========================================================== */
+function updateReconTable(forces) {
+  reconBody.innerHTML = '';
+  forces.perCharge.forEach((f, idx) => {
+    const color = VECTOR_COLORS[idx % VECTOR_COLORS.length];
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td style="color:${color};">F${idx + 1}</td><td>${formatM(f.r)}</td><td>${formatForce(f.magnitude)}</td><td>${formatDeg(f.theta)}</td><td>${formatForce(f.Fx)}</td><td>${formatForce(f.Fy)}</td>`;
+    reconBody.appendChild(tr);
+  });
+  const sumTr = document.createElement('tr');
+  sumTr.className = 'sum-row';
+  const sumFx = forces.perCharge.reduce((s, f) => s + f.Fx, 0);
+  const sumFy = forces.perCharge.reduce((s, f) => s + f.Fy, 0);
+  sumTr.innerHTML = `<td>Σ</td><td></td><td></td><td></td><td>${formatForce(sumFx)}</td><td>${formatForce(sumFy)}</td>`;
+  reconBody.appendChild(sumTr);
+  const netTr = document.createElement('tr');
+  netTr.className = 'net-row';
+  netTr.innerHTML = `<td>F_net</td><td></td><td>${formatForce(forces.netMagnitude)}</td><td>${formatDeg(forces.netTheta)}</td><td>${formatForce(forces.netFx)}</td><td>${formatForce(forces.netFy)}</td>`;
+  reconBody.appendChild(netTr);
+}
+
+function drawReconCanvas(forces) {
+  const w = reconCanvas.width, h = reconCanvas.height;
+  reconCtx.clearRect(0, 0, w, h);
+  const originX = w * 0.5, originY = h * 0.8;
+  const maxSpan = Math.min(w, h) * 0.42;
+  const maxComp = Math.max(...forces.perCharge.map(f => Math.max(Math.abs(f.Fx), Math.abs(f.Fy))), Math.abs(forces.netFx), Math.abs(forces.netFy), 1e-9);
+  const scale = maxSpan / maxComp;
+
+  // axes
+  reconCtx.strokeStyle = '#3a3d2c';
+  reconCtx.setLineDash([4, 4]);
+  reconCtx.lineWidth = 1;
+  reconCtx.beginPath();
+  reconCtx.moveTo(originX - w * 0.4, originY); reconCtx.lineTo(originX + w * 0.4, originY);
+  reconCtx.moveTo(originX, originY + h * 0.1); reconCtx.lineTo(originX, originY - h * 0.75);
+  reconCtx.stroke();
+  reconCtx.setLineDash([]);
+
+  // tip-to-tail chain of each force's Fx then Fy leg
+  let cx = originX, cy = originY;
+  forces.perCharge.forEach((f, idx) => {
+    const color = VECTOR_COLORS[idx % VECTOR_COLORS.length];
+    const fx = f.Fx * scale, fy = f.Fy * scale;
+    reconCtx.strokeStyle = color;
+    reconCtx.lineWidth = 2.5;
+    reconCtx.globalAlpha = 0.85;
+    reconCtx.beginPath();
+    reconCtx.moveTo(cx, cy); reconCtx.lineTo(cx + fx, cy - fy);
+    reconCtx.stroke();
+    reconCtx.globalAlpha = 1;
+    cx += fx; cy -= fy;
+  });
+  // resultant, drawn from the true origin
+  drawArrow(reconCtx, originX, originY, cx, cy, '#ffb300', 3.5);
+  reconCtx.fillStyle = '#ffb300';
+  reconCtx.font = '700 12px "JetBrains Mono", monospace';
+  reconCtx.textAlign = 'left';
+  reconCtx.fillText('F_net', cx + 8, cy);
+  reconCtx.fillStyle = '#93957f';
+  reconCtx.font = '11px Inter, sans-serif';
+  reconCtx.fillText('each colored segment = one force’s (Fx, Fy) placed tip-to-tail', 10, 18);
+}
+
+/* ===========================================================
+   MODEL CHECK PANEL
+=========================================================== */
+function updateModelCheck() {
+  const fx = REFERENCE.result.netFx;
+  const fyErr = Math.abs(REFERENCE.result.netFy - REFERENCE.expectedFy) / REFERENCE.expectedFy * 100;
+  checkFxEl.textContent = formatForce(fx);
+  checkFxEl.className = Math.abs(fx) < 1e-6 ? 'ok' : 'warn';
+  checkFyEl.textContent = fyErr.toFixed(4) + ' %';
+  checkFyEl.className = fyErr < 0.01 ? 'ok' : 'warn';
+}
+
+/* ===========================================================
+   PREDICTION CHECK
+=========================================================== */
+function pctError(predicted, actual) {
+  if (predicted === null || predicted === '' || isNaN(predicted)) return null;
+  if (Math.abs(actual) < 1e-9) return Math.abs(predicted) < 1e-6 ? 0 : null;
+  return Math.abs((predicted - actual) / actual) * 100;
+}
+checkBtn.addEventListener('click', () => {
+  const forces = computeForces();
+  const checks = [
+    [predFx, errFx, parseFloat(predFx.value), forces.netFx],
+    [predFy, errFy, parseFloat(predFy.value), forces.netFy],
+    [predFmag, errFmag, parseFloat(predFmag.value), forces.netMagnitude],
+    [predTheta, errTheta, parseFloat(predTheta.value), forces.netTheta * 180 / Math.PI]
+  ];
+  checks.forEach(([inputEl, errEl, predicted, actual]) => {
+    const err = pctError(predicted, actual);
+    if (err === null) { errEl.textContent = '—'; errEl.style.color = 'var(--muted)'; return; }
+    errEl.textContent = err.toFixed(1) + ' %';
+    errEl.style.color = err < 5 ? 'var(--green)' : 'var(--rose)';
+  });
+});
+
+/* ===========================================================
+   MAIN UPDATE
+=========================================================== */
+function update() {
+  const forces = computeForces();
+  drawScene(forces);
+  drawBreakout(forces);
+  updateReconTable(forces);
+  drawReconCanvas(forces);
+  updateModelCheck();
+  rebuildChips();
+}
+
+rebuildChargeRows();
+syncTestControls();
+update();
+</script>
+
+</body></html>
