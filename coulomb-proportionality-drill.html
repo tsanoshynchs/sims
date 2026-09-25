@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coulomb Proportionality Drill</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+  :root{
+    --bg:#0b0d10;
+    --panel:#14171c;
+    --panel-raised:#191d24;
+    --border:#262b33;
+    --border-soft:#1d2129;
+    --text:#e8ecf1;
+    --muted:#8b95a3;
+    --muted-dim:#5b6472;
+    --q1:#4ade80;
+    --q1-dim:#1c3324;
+    --q2:#a78bfa;
+    --q2-dim:#2a2440;
+    --r:#eab308;
+    --r-dim:#332c0d;
+    --amber:#f5a623;
+    --amber-dim:#3a2a0e;
+    --cyan:#22d3ee;
+    --good:#4ade80;
+    --bad:#f87171;
+    color-scheme: dark;
+  }
+
+  *{box-sizing:border-box;}
+  html, body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:"Inter",system-ui,-apple-system,sans-serif;
+    padding-inline:16px;
+    padding-block:28px;
+    display:flex;
+    justify-content:center;
+  }
+  .wrap{width:100%;max-width:980px;display:flex;flex-direction:column;gap:20px;}
+
+  h1{font-size:1.4rem;margin:0 0 4px;letter-spacing:-0.01em;}
+  .eyebrow{
+    font-family:"JetBrains Mono",monospace;
+    font-size:0.72rem;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin:0 0 6px;
+  }
+  header p.sub{margin:0;color:var(--muted);font-size:0.92rem;max-width:65ch;}
+
+  .formula-ref{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    flex-wrap:wrap;
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:14px 18px;
+  }
+  .formula-ref .law{
+    font-family:"JetBrains Mono",monospace;
+    font-size:1.15rem;
+    letter-spacing:0.01em;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .formula-ref .law .q1{color:var(--q1);}
+  .formula-ref .law .q2{color:var(--q2);}
+  .formula-ref .law .r{color:var(--r);}
+
+  .frac{
+    display:inline-flex;
+    flex-direction:column;
+    align-items:center;
+    vertical-align:middle;
+    line-height:1.3;
+  }
+  .frac .num, .frac .den{padding:0 4px;}
+  .frac .bar{
+    width:100%;
+    height:2px;
+    background:var(--text);
+    margin:2px 0;
+  }
+  .formula-ref .note{
+    font-size:0.78rem;
+    color:var(--muted-dim);
+    border-left:1px solid var(--border);
+    padding-left:14px;
+  }
+
+  .grid{display:grid;grid-template-columns:260px 1fr;gap:16px;}
+  @media (max-width:680px){ .grid{grid-template-columns:1fr;} }
+
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:18px;
+  }
+  .panel h2{
+    font-size:0.72rem;
+    text-transform:uppercase;
+    letter-spacing:0.09em;
+    color:var(--muted);
+    margin:0 0 14px;
+    font-weight:600;
+  }
+
+  .toggle-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:10px 12px;
+    border:1px solid var(--border-soft);
+    border-radius:8px;
+    margin-bottom:8px;
+    background:var(--panel-raised);
+  }
+  .toggle-row:last-of-type{margin-bottom:16px;}
+  .toggle-label{display:flex;align-items:center;gap:9px;font-size:0.88rem;}
+  .dot{width:9px;height:9px;border-radius:50%;flex:none;}
+  .dot.q1{background:var(--q1);box-shadow:0 0 8px color-mix(in srgb, var(--q1) 60%, transparent);}
+  .dot.q2{background:var(--q2);box-shadow:0 0 8px color-mix(in srgb, var(--q2) 60%, transparent);}
+  .dot.r{background:var(--r);box-shadow:0 0 8px color-mix(in srgb, var(--r) 60%, transparent);}
+
+  .switch{
+    position:relative;width:38px;height:21px;border-radius:99px;
+    background:#2a303a;border:1px solid var(--border);
+    cursor:pointer;flex:none;appearance:none;-webkit-appearance:none;
+    transition:background .15s ease;
+  }
+  .switch::after{
+    content:"";position:absolute;top:2px;left:2px;width:15px;height:15px;
+    border-radius:50%;background:#8b95a3;transition:transform .15s ease, background .15s ease;
+  }
+  .switch:checked{background:color-mix(in srgb, var(--cyan) 35%, #2a303a);}
+  .switch:checked::after{transform:translateX(17px);background:var(--cyan);}
+  .switch:focus-visible{outline:2px solid var(--cyan);outline-offset:2px;}
+
+  button{
+    font-family:"Inter",system-ui,sans-serif;
+    font-weight:600;
+    font-size:0.88rem;
+    border-radius:8px;
+    border:1px solid var(--border);
+    padding:11px 16px;
+    cursor:pointer;
+    transition:filter .12s ease, transform .05s ease;
+    width:100%;
+  }
+  button:active{transform:translateY(1px);}
+  button:focus-visible{outline:2px solid var(--cyan);outline-offset:2px;}
+  button:disabled{opacity:0.4;cursor:not-allowed;}
+
+  .btn-primary{
+    background:var(--cyan);
+    color:#04222a;
+    border-color:var(--cyan);
+  }
+  .btn-primary:hover:not(:disabled){filter:brightness(1.08);}
+
+  .btn-amber{
+    background:var(--amber);
+    color:#2a1a02;
+    border-color:var(--amber);
+    margin-top:12px;
+  }
+  .btn-amber:hover:not(:disabled){filter:brightness(1.08);}
+
+  .hint{font-size:0.76rem;color:var(--muted-dim);margin-top:2px;line-height:1.4;}
+
+  .problem-header{
+    display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:14px;
+    flex-wrap:wrap;
+  }
+  .problem-count{font-family:"JetBrains Mono",monospace;font-size:0.78rem;color:var(--muted);}
+
+  .chips{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:6px;}
+  .chip{
+    flex:1 1 150px;
+    border-radius:10px;
+    padding:14px 16px;
+    border:1px solid var(--border-soft);
+    background:var(--panel-raised);
+    position:relative;
+    overflow:hidden;
+  }
+  .chip.active{border-color:var(--chip-color);}
+  .chip .label{
+    font-size:0.72rem;text-transform:uppercase;letter-spacing:0.07em;color:var(--muted);
+    display:flex;align-items:center;gap:7px;margin-bottom:8px;
+  }
+  .chip .value{
+    font-family:"JetBrains Mono",monospace;
+    font-size:1.6rem;
+    color:var(--chip-color);
+  }
+  .chip .value.dim{color:var(--muted-dim);}
+  .chip .tag{
+    font-size:0.68rem;color:var(--muted-dim);margin-top:4px;
+  }
+  .chip[data-var="q1"]{--chip-color:var(--q1);}
+  .chip[data-var="q2"]{--chip-color:var(--q2);}
+  .chip[data-var="r"]{--chip-color:var(--r);}
+
+  .reveal{
+    margin-top:16px;
+    border-top:1px dashed var(--border);
+    padding-top:16px;
+  }
+  .reveal[hidden]{display:none;}
+  .sub-line{
+    font-family:"JetBrains Mono",monospace;
+    font-size:1.05rem;
+    color:var(--text);
+    display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+    margin-bottom:10px;
+  }
+  .sub-line .eq{color:var(--muted-dim);}
+  .answer-row{display:flex;gap:14px;flex-wrap:wrap;}
+  .answer-box{
+    background:var(--amber-dim);
+    border:1px solid color-mix(in srgb, var(--amber) 45%, var(--border));
+    border-radius:8px;
+    padding:10px 14px;
+    font-family:"JetBrains Mono",monospace;
+  }
+  .answer-box .k{font-size:0.68rem;text-transform:uppercase;letter-spacing:0.07em;color:var(--muted);display:block;margin-bottom:3px;}
+  .answer-box .v{font-size:1.3rem;color:var(--amber);}
+  .answer-box .v .sim{font-size:0.9rem;color:var(--muted);margin-left:6px;}
+
+  .placeholder{color:var(--muted-dim);font-size:0.88rem;padding:10px 0 2px;}
+
+  .check-grid{display:flex;flex-direction:column;gap:8px;}
+  .check-row{
+    display:grid;
+    grid-template-columns:1fr auto auto auto;
+    align-items:center;
+    gap:10px;
+    padding:9px 12px;
+    border:1px solid var(--border-soft);
+    border-radius:8px;
+    background:var(--panel-raised);
+    font-size:0.82rem;
+  }
+  @media (max-width:560px){
+    .check-row{grid-template-columns:1fr;gap:4px;}
+  }
+  .check-row .desc{color:var(--muted);}
+  .check-row .expr{font-family:"JetBrains Mono",monospace;color:var(--text);}
+  .badge{
+    font-family:"JetBrains Mono",monospace;
+    font-size:0.68rem;
+    font-weight:700;
+    letter-spacing:0.05em;
+    padding:3px 9px;
+    border-radius:99px;
+    justify-self:start;
+  }
+  .badge.pass{background:color-mix(in srgb, var(--good) 22%, transparent);color:var(--good);border:1px solid color-mix(in srgb, var(--good) 45%, transparent);}
+  .badge.fail{background:color-mix(in srgb, var(--bad) 22%, transparent);color:var(--bad);border:1px solid color-mix(in srgb, var(--bad) 45%, transparent);}
+
+  footer{font-size:0.74rem;color:var(--muted-dim);text-align:center;padding-top:4px;}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <header>
+    <p class="eyebrow">AP Physics 2 &middot; Electrostatics</p>
+    <h1>Coulomb&rsquo;s Law &mdash; Proportional Reasoning Drill</h1>
+    <p class="sub">
+      Practice reasoning about how the electric force between two point charges scales when you
+      change a charge or the separation distance &mdash; without ever calculating a force in newtons.
+    </p>
+  </header>
+
+  <div class="formula-ref">
+    <div class="law">F &prop;
+      <span class="frac">
+        <span class="num"><span class="q1">q<sub>1</sub></span> <span class="q2">q<sub>2</sub></span></span>
+        <span class="bar"></span>
+        <span class="den"><span class="r">r</span><sup>2</sup></span>
+      </span>
+    </div>
+    <div class="note">
+      Idealizations: point charges, vacuum, electrostatic (no motion/no magnetic effects). Only the
+      <em>proportionality</em> is tracked here &mdash; charge and radius values are multiples of an arbitrary
+      baseline (all = 1), not physical magnitudes.
+    </div>
+  </div>
+
+  <div class="grid">
+
+    <div class="panel">
+      <h2>Problem Setup</h2>
+
+      <div class="toggle-row">
+        <span class="toggle-label"><span class="dot q1"></span>Vary q<sub>1</sub></span>
+        <input type="checkbox" class="switch" id="toggle-q1" checked>
+      </div>
+      <div class="toggle-row">
+        <span class="toggle-label"><span class="dot q2"></span>Vary q<sub>2</sub></span>
+        <input type="checkbox" class="switch" id="toggle-q2">
+      </div>
+      <div class="toggle-row">
+        <span class="toggle-label"><span class="dot r"></span>Vary r</span>
+        <input type="checkbox" class="switch" id="toggle-r">
+      </div>
+
+      <button class="btn-primary" id="btn-new">New Problem</button>
+      <p class="hint" id="setup-hint">
+        Unchecked variables stay at baseline (&times;1). Charges vary among
+        &times;&frac12;, &times;1, &times;2, &times;3, &times;4. Radius varies among &times;&frac12;, &times;1, &times;2, &times;3.
+      </p>
+    </div>
+
+    <div class="panel">
+      <div class="problem-header">
+        <h2 style="margin:0;">Current Problem</h2>
+        <span class="problem-count" id="problem-count">Problem #1</span>
+      </div>
+
+      <div class="chips">
+        <div class="chip" data-var="q1" id="chip-q1">
+          <div class="label"><span class="dot q1"></span>q<sub>1</sub></div>
+          <div class="value" id="val-q1">&times;1</div>
+          <div class="tag" id="tag-q1">baseline</div>
+        </div>
+        <div class="chip" data-var="q2" id="chip-q2">
+          <div class="label"><span class="dot q2"></span>q<sub>2</sub></div>
+          <div class="value" id="val-q2">&times;1</div>
+          <div class="tag" id="tag-q2">baseline</div>
+        </div>
+        <div class="chip" data-var="r" id="chip-r">
+          <div class="label"><span class="dot r"></span>r</div>
+          <div class="value" id="val-r">&times;1</div>
+          <div class="tag" id="tag-r">baseline</div>
+        </div>
+      </div>
+
+      <button class="btn-amber" id="btn-check">Check Proportionality</button>
+
+      <div class="reveal" id="reveal" hidden>
+        <div class="sub-line">
+          <span>F &prop;</span>
+          <span class="eq">(</span><span id="sub-q1" class="q1"></span>
+          <span class="eq">&middot;</span><span id="sub-q2" class="q2"></span><span class="eq">)</span>
+          <span class="eq">/</span>
+          <span class="eq">(</span><span id="sub-r" class="r"></span><span class="eq">)</span><sup>2</sup>
+        </div>
+        <div class="answer-row">
+          <div class="answer-box">
+            <span class="k">Unreduced</span>
+            <span class="v" id="ans-unreduced">&mdash;</span>
+          </div>
+          <div class="answer-box">
+            <span class="k">Simplified</span>
+            <span class="v" id="ans-simplified">&mdash;<span class="sim" id="ans-decimal"></span></span>
+          </div>
+        </div>
+      </div>
+      <div class="placeholder" id="placeholder">Press &ldquo;Check Proportionality&rdquo; to reveal the substitution and result.</div>
+    </div>
+
+  </div>
+
+  <div class="panel">
+    <h2>Model Check &mdash; live self-test</h2>
+    <div class="check-grid" id="check-grid"></div>
+  </div>
+
+  <footer>Built for classroom practice &middot; proportionality only, not a force calculator.</footer>
+
+</div>
+
+<script>
+(function(){
+
+  // ---------- Physics / math core (no DOM access below this block) ----------
+
+  // Exact rational arithmetic so factors like x1/2 never lose precision.
+  function gcd(a, b){ a = Math.abs(a); b = Math.abs(b); while(b){ var t = b; b = a % b; a = t; } return a || 1; }
+
+  function reduceFrac(n, d){
+    if(d < 0){ n = -n; d = -d; }
+    const g = gcd(n, d);
+    return { n: n / g, d: d / g };
+  }
+
+  function multiplyFrac(a, b){ return { n: a.n * b.n, d: a.d * b.d }; }
+  function squareFrac(a){ return { n: a.n * a.n, d: a.d * a.d }; }
+  function divideFrac(a, b){ return { n: a.n * b.d, d: a.d * b.n }; }
+
+  function fracToString(f){
+    if(f.d === 1) return String(f.n);
+    return f.n + "/" + f.d;
+  }
+
+  function fracToDecimal(f){ return f.n / f.d; }
+
+  // The allowed practice factors, each as an exact fraction plus its display label.
+  const CHARGE_FACTORS = [
+    { label: "½", n: 1, d: 2 },
+    { label: "1",       n: 1, d: 1 },
+    { label: "2",       n: 2, d: 1 },
+    { label: "3",       n: 3, d: 1 },
+    { label: "4",       n: 4, d: 1 }
+  ];
+  const RADIUS_FACTORS = [
+    { label: "½", n: 1, d: 2 },
+    { label: "1",       n: 1, d: 1 },
+    { label: "2",       n: 2, d: 1 },
+    { label: "3",       n: 3, d: 1 }
+  ];
+  const BASELINE = { label: "1", n: 1, d: 1 };
+
+  function randomFrom(list){ return list[Math.floor(Math.random() * list.length)]; }
+
+  // Core computation: given the three factors currently in effect, build the
+  // literal substitution (F * q1 * q2) / r^2 and return both the unreduced
+  // and simplified rational result. This is the single function driving both
+  // every generated problem AND the model-check panel below, so nothing here
+  // is ever a hard-coded number.
+  function substituteAndCompute(q1, q2, r){
+    const numFrac = multiplyFrac(q1, q2);
+    const rSquared = squareFrac(r);
+    const combined = divideFrac(numFrac, rSquared); // unreduced, mirrors direct substitution
+    const simplified = reduceFrac(combined.n, combined.d);
+    return { combined: combined, simplified: simplified };
+  }
+
+  // ---------- Reference cases for the live self-check panel ----------
+  const REFERENCE_CASES = [
+    {
+      desc: "All variables at baseline reproduces F unchanged",
+      q1: BASELINE, q2: BASELINE, r: BASELINE,
+      expectedN: 1, expectedD: 1
+    },
+    {
+      desc: "Doubling one charge doubles the force (linear in q)",
+      q1: { label: "2", n: 2, d: 1 }, q2: BASELINE, r: BASELINE,
+      expectedN: 2, expectedD: 1
+    },
+    {
+      desc: "Doubling r quarters the force (inverse-square)",
+      q1: BASELINE, q2: BASELINE, r: { label: "2", n: 2, d: 1 },
+      expectedN: 1, expectedD: 4
+    }
+  ];
+
+  function runReferenceChecks(){
+    return REFERENCE_CASES.map(function(c){
+      const result = substituteAndCompute(c.q1, c.q2, c.r);
+      const pass = result.simplified.n === c.expectedN && result.simplified.d === c.expectedD;
+      console.assert(pass, "Model check failed: " + c.desc);
+      return {
+        desc: c.desc,
+        expr: "(" + c.q1.label + " · " + c.q2.label + ") / (" + c.r.label + ")² = " + c.expectedN + "/" + c.expectedD,
+        pass: pass
+      };
+    });
+  }
+
+  // ---------- UI / state layer (everything below touches the DOM) ----------
+
+  const state = {
+    q1: BASELINE,
+    q2: BASELINE,
+    r: BASELINE,
+    problemNumber: 1
+  };
+
+  const els = {
+    toggleQ1: document.getElementById("toggle-q1"),
+    toggleQ2: document.getElementById("toggle-q2"),
+    toggleR: document.getElementById("toggle-r"),
+    btnNew: document.getElementById("btn-new"),
+    btnCheck: document.getElementById("btn-check"),
+    problemCount: document.getElementById("problem-count"),
+    reveal: document.getElementById("reveal"),
+    placeholder: document.getElementById("placeholder"),
+    setupHint: document.getElementById("setup-hint")
+  };
+
+  function inPlay(){
+    return {
+      q1: els.toggleQ1.checked,
+      q2: els.toggleQ2.checked,
+      r: els.toggleR.checked
+    };
+  }
+
+  function updateNewButtonState(){
+    const p = inPlay();
+    const any = p.q1 || p.q2 || p.r;
+    els.btnNew.disabled = !any;
+    els.setupHint.textContent = any
+      ? "Unchecked variables stay at baseline (×1). New Problem re-rolls only the checked ones."
+      : "Check at least one variable above before generating a problem.";
+  }
+
+  function renderChip(varName, factor, varied){
+    document.getElementById("val-" + varName).innerHTML = "&times;" + factor.label;
+    document.getElementById("val-" + varName).classList.toggle("dim", !varied);
+    document.getElementById("tag-" + varName).textContent = varied ? "in play this round" : "baseline (unchecked)";
+    document.getElementById("chip-" + varName).classList.toggle("active", varied);
+  }
+
+  function newProblem(){
+    const p = inPlay();
+    state.q1 = p.q1 ? randomFrom(CHARGE_FACTORS) : BASELINE;
+    state.q2 = p.q2 ? randomFrom(CHARGE_FACTORS) : BASELINE;
+    state.r  = p.r  ? randomFrom(RADIUS_FACTORS) : BASELINE;
+
+    renderChip("q1", state.q1, p.q1);
+    renderChip("q2", state.q2, p.q2);
+    renderChip("r", state.r, p.r);
+
+    els.problemCount.textContent = "Problem #" + state.problemNumber;
+    state.problemNumber += 1;
+
+    els.reveal.hidden = true;
+    els.placeholder.hidden = false;
+  }
+
+  function checkProportionality(){
+    const result = substituteAndCompute(state.q1, state.q2, state.r);
+
+    document.getElementById("sub-q1").textContent = state.q1.label;
+    document.getElementById("sub-q2").textContent = state.q2.label;
+    document.getElementById("sub-r").textContent = state.r.label;
+
+    document.getElementById("ans-unreduced").textContent = fracToString(result.combined) + " F";
+
+    const simp = result.simplified;
+    const isWhole = simp.d === 1;
+    document.getElementById("ans-simplified").firstChild.textContent = fracToString(simp) + " F";
+    const decimalEl = document.getElementById("ans-decimal");
+    if(!isWhole){
+      decimalEl.textContent = "(≈ " + fracToDecimal(simp).toFixed(3).replace(/0+$/, "").replace(/\.$/, "") + " F)";
+    } else {
+      decimalEl.textContent = "";
+    }
+
+    els.reveal.hidden = false;
+    els.placeholder.hidden = true;
+  }
+
+  function renderModelCheck(){
+    const results = runReferenceChecks();
+    const grid = document.getElementById("check-grid");
+    grid.innerHTML = "";
+    results.forEach(function(r){
+      const row = document.createElement("div");
+      row.className = "check-row";
+      row.innerHTML =
+        '<span class="desc">' + r.desc + '</span>' +
+        '<span class="expr">' + r.expr + '</span>' +
+        '<span class="badge ' + (r.pass ? "pass" : "fail") + '">' + (r.pass ? "PASS" : "FAIL") + '</span>' +
+        '<span></span>';
+      grid.appendChild(row);
+    });
+  }
+
+  [els.toggleQ1, els.toggleQ2, els.toggleR].forEach(function(el){
+    el.addEventListener("change", updateNewButtonState);
+  });
+  els.btnNew.addEventListener("click", newProblem);
+  els.btnCheck.addEventListener("click", checkProportionality);
+
+  function boot(){
+    updateNewButtonState();
+    renderChip("q1", state.q1, false);
+    renderChip("q2", state.q2, false);
+    renderChip("r", state.r, false);
+    renderModelCheck();
+  }
+
+  boot();
+
+})();
+</script>
+
+</body>
+</html>
