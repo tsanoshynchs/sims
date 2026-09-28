@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Electric Potential Energy Lab</title>
+<style>
+  :root{
+    --bg:#0a0d11;
+    --panel:#12161c;
+    --panel2:#161b22;
+    --border:#232a33;
+    --text:#e6e9ee;
+    --muted:#8b95a3;
+    --amber:#f5a623;
+    --cyan:#22d3ee;
+    --good:#22c55e;
+    --bad:#ef4444;
+    --pos-fill:#ef4444;
+    --neg-fill:#3b82f6;
+    --id0:#4ade80; /* green */
+    --id1:#a78bfa; /* violet */
+    --id2:#fb7185; /* rose */
+    --id3:#eab308; /* gold */
+    --mono:'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --sans:'Inter', ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:var(--sans);}
+  body{padding:20px;}
+  h1{font-size:1.3rem;margin:0 0 2px 0;font-weight:600;letter-spacing:.2px;}
+  .subtitle{color:var(--muted);font-size:.85rem;margin-bottom:16px;}
+  .layout{
+    display:grid;
+    grid-template-columns:280px 1fr 340px;
+    gap:14px;
+    align-items:start;
+    max-width:1320px;
+    margin:0 auto;
+  }
+  @media (max-width:860px){
+    .layout{grid-template-columns:1fr;}
+  }
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:14px;
+  }
+  .panel + .panel{margin-top:14px;}
+  .panel h2{
+    font-size:.72rem;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--muted);
+    margin:0 0 10px 0;
+    font-weight:600;
+  }
+  button{
+    font-family:var(--sans);
+    background:var(--panel2);
+    color:var(--text);
+    border:1px solid var(--border);
+    border-radius:6px;
+    padding:7px 10px;
+    font-size:.82rem;
+    cursor:pointer;
+  }
+  button:hover:not(:disabled){border-color:#3a4453;}
+  button:disabled{opacity:.35;cursor:not-allowed;}
+  button.primary{background:var(--cyan);color:#062028;border-color:var(--cyan);font-weight:600;}
+  button.primary:hover:not(:disabled){filter:brightness(1.08);}
+  .row{display:flex;gap:8px;align-items:center;}
+  .row.wrap{flex-wrap:wrap;}
+  .row.between{justify-content:space-between;}
+  .charge-row{
+    display:flex;align-items:center;gap:8px;
+    background:var(--panel2);
+    border:1px solid var(--border);
+    border-radius:6px;
+    padding:7px 8px;
+    margin-bottom:6px;
+    font-family:var(--mono);
+    font-size:.78rem;
+  }
+  .swatch{
+    width:14px;height:14px;border-radius:50%;flex:none;
+    box-shadow:0 0 0 2px rgba(255,255,255,.08) inset;
+  }
+  .charge-row .pos{color:var(--muted);flex:1;font-size:.72rem;}
+  .stepper{display:flex;align-items:center;gap:4px;}
+  .stepper button{padding:2px 7px;font-size:.78rem;line-height:1;}
+  .stepper .val{min-width:44px;text-align:center;font-weight:600;}
+  .stepper .val.pos{color:var(--pos-fill);}
+  .stepper .val.neg{color:var(--neg-fill);}
+  .rm{color:var(--bad);border-color:#3a2323;background:#1a1010;}
+  fieldset{border:1px solid var(--border);border-radius:6px;padding:8px 10px;margin:0 0 10px 0;}
+  legend{font-size:.7rem;color:var(--muted);padding:0 4px;text-transform:uppercase;letter-spacing:.06em;}
+  label.radio{display:flex;align-items:center;gap:6px;font-size:.82rem;padding:3px 0;cursor:pointer;}
+  .hint{font-size:.72rem;color:var(--muted);margin-top:6px;line-height:1.4;}
+  input[type=range]{width:100%;}
+  .slider-label{display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted);font-family:var(--mono);margin-top:2px;}
+  canvas{
+    background:#0d1116;
+    border:1px solid var(--border);
+    border-radius:8px;
+    display:block;
+    width:100%;
+    height:auto;
+    touch-action:none;
+    cursor:grab;
+  }
+  .toggles{display:flex;flex-direction:column;gap:6px;margin-top:10px;font-size:.82rem;}
+  .toggles label{display:flex;align-items:center;gap:8px;cursor:pointer;}
+  .energy-box{
+    font-family:var(--mono);
+    background:var(--panel2);
+    border:1px solid var(--border);
+    border-radius:6px;
+    padding:10px;
+    margin-bottom:10px;
+    font-size:.86rem;
+  }
+  .energy-box .lbl{color:var(--muted);font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;}
+  .energy-box .val{font-size:1.05rem;font-weight:600;color:var(--amber);}
+  .energy-box .val.zero-note{color:var(--muted);font-size:.78rem;font-weight:400;}
+  .pair-row{
+    display:flex;align-items:center;gap:8px;
+    padding:6px 0;border-bottom:1px dashed var(--border);
+    font-family:var(--mono);font-size:.76rem;
+  }
+  .pair-row:last-child{border-bottom:none;}
+  .pair-dots{display:flex;gap:2px;flex:none;}
+  .pair-dots span{width:9px;height:9px;border-radius:50%;display:inline-block;}
+  .frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;margin:0 4px;line-height:1.15;}
+  .frac .num,.frac .den{padding:0 4px;white-space:nowrap;}
+  .frac .num{border-bottom:1px solid currentColor;}
+  .pair-total{margin-left:auto;font-weight:600;white-space:nowrap;}
+  .badge{
+    display:inline-block;font-size:.68rem;font-weight:700;letter-spacing:.05em;
+    padding:2px 7px;border-radius:4px;text-transform:uppercase;
+  }
+  .badge.pass{background:rgba(34,197,94,.15);color:var(--good);border:1px solid rgba(34,197,94,.4);}
+  .badge.fail{background:rgba(239,68,68,.15);color:var(--bad);border:1px solid rgba(239,68,68,.4);}
+  .modelcheck{font-family:var(--mono);font-size:.74rem;color:var(--muted);line-height:1.6;}
+  .modelcheck .line{display:flex;justify-content:space-between;gap:8px;}
+  .modelcheck .line b{color:var(--text);font-weight:600;}
+  .predict-row{display:flex;gap:6px;margin-bottom:8px;}
+  .predict-row input[type=number]{
+    flex:1;min-width:0;background:var(--panel2);border:1px solid var(--border);
+    color:var(--text);border-radius:6px;padding:7px 8px;font-family:var(--mono);font-size:.85rem;
+  }
+  .predict-row select{
+    background:var(--panel2);border:1px solid var(--border);color:var(--text);
+    border-radius:6px;padding:7px 6px;font-family:var(--mono);font-size:.8rem;
+  }
+  .feedback{font-size:.82rem;padding:8px 10px;border-radius:6px;margin-top:4px;display:none;}
+  .feedback.correct{display:block;background:rgba(34,197,94,.12);color:var(--good);border:1px solid rgba(34,197,94,.35);}
+  .feedback.incorrect{display:block;background:rgba(239,68,68,.12);color:var(--bad);border:1px solid rgba(239,68,68,.35);}
+  .initial-readout{font-family:var(--mono);font-size:.8rem;line-height:1.7;}
+  .initial-readout .muted{color:var(--muted);}
+  .footnote{font-size:.7rem;color:var(--muted);margin-top:12px;line-height:1.5;}
+</style>
+</head>
+<body>
+
+<h1>Electric Potential Energy Lab</h1>
+<div class="subtitle">Place up to four point charges and explore the potential energy stored in their configuration.</div>
+
+<div class="layout">
+
+  <!-- LEFT: charges & placement -->
+  <div>
+    <div class="panel">
+      <h2>Charges <span id="chargeCount" style="color:var(--text);font-family:var(--mono);"></span></h2>
+      <div id="chargeList"></div>
+      <div class="row" style="margin-top:8px;">
+        <button id="addChargeBtn">+ Add Charge</button>
+        <button id="resetBtn" style="margin-left:auto;">Reset</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Placement</h2>
+      <fieldset>
+        <legend>Mode</legend>
+        <label class="radio"><input type="radio" name="placeMode" value="snap" checked> Snap to grid (0.5 m)</label>
+        <label class="radio"><input type="radio" name="placeMode" value="free"> Free placement</label>
+      </fieldset>
+      <fieldset>
+        <legend>Arrange</legend>
+        <div class="row wrap">
+          <button id="triBtn">Triangle</button>
+          <button id="sqBtn">Square</button>
+        </div>
+        <div id="shapeSliderWrap" style="margin-top:8px;display:none;">
+          <input type="range" id="shapeSize" min="0.5" max="3.0" step="0.1" value="1.0">
+          <div class="slider-label"><span>Side length</span><span id="shapeSizeVal">1.0 m</span></div>
+        </div>
+        <div class="hint">Triangle needs exactly 3 charges; Square needs exactly 4. Dragging a charge afterward clears the formation.</div>
+      </fieldset>
+    </div>
+  </div>
+
+  <!-- CENTER: canvas -->
+  <div>
+    <div class="panel">
+      <h2>Charge Configuration</h2>
+      <canvas id="scene" width="560" height="560"></canvas>
+      <div class="toggles">
+        <label><input type="checkbox" id="showTotal"> Show total potential energy</label>
+        <label><input type="checkbox" id="showBreakdown"> Show full calculation (pairwise breakdown)</label>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: energy, prediction, model check -->
+  <div>
+    <div class="panel">
+      <h2>System Potential Energy</h2>
+      <div class="energy-box">
+        <div class="lbl">Total U</div>
+        <div class="val" id="totalUDisplay">hidden</div>
+      </div>
+      <div id="breakdownWrap" style="display:none;">
+        <div id="pairRows"></div>
+        <div class="hint" id="breakdownNote"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Initial State &amp; &Delta;U</h2>
+      <div class="row" style="margin-bottom:8px;">
+        <button id="setInitialBtn">Set as Initial State</button>
+        <button id="clearInitialBtn" disabled>Clear</button>
+      </div>
+      <div class="initial-readout" id="initialReadout">
+        <span class="muted">No initial state saved yet.</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Predict the Total Energy</h2>
+      <div class="predict-row">
+        <input type="number" id="predictInput" step="any" placeholder="predicted value">
+        <select id="predictUnit">
+          <option value="1e-3" selected>mJ</option>
+          <option value="1e-6">&micro;J</option>
+          <option value="1">J</option>
+        </select>
+      </div>
+      <button id="checkBtn" class="primary" style="width:100%;">Check My Answer</button>
+      <div class="feedback" id="feedback"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Model Check</h2>
+      <div class="modelcheck" id="modelCheck"></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footnote" style="max-width:1320px;margin:14px auto 0;">
+  Model: ideal point charges in vacuum, k = 8.99&times;10&sup9; N&middot;m&sup2;/C&sup2;. Potential energy is computed as
+  U = &Sigma; k q<sub>i</sub>q<sub>j</sub> / r<sub>ij</sub> summed over every pair of charges &mdash; the same superposition idea used
+  for force and field elsewhere in this series. No dielectric, relativistic, or time-dependent effects are modeled.
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ============================== PHYSICS CORE ============================== */
+/* Kept fully separate from rendering / DOM below. */
+
+const K = 8.99e9; // N*m^2/C^2
+
+/** Potential energy of one pair of point charges (SI: C, m -> J). */
+function pairEnergy(q1C, q2C, r_m){
+  if(r_m <= 0) return NaN;
+  return K * q1C * q2C / r_m;
+}
+
+/** Total potential energy of a system: sum over unique pairs. */
+function totalEnergy(charges){
+  let U = 0;
+  for(let i=0;i<charges.length;i++){
+    for(let j=i+1;j<charges.length;j++){
+      const r = dist(charges[i], charges[j]);
+      U += pairEnergy(charges[i].q*1e-6, charges[j].q*1e-6, r);
+    }
+  }
+  return U;
+}
+
+function dist(a,b){
+  return Math.hypot(a.x-b.x, a.y-b.y);
+}
+
+/* Reference (self-test) case: independent of whatever is live in the scene.
+   q1 = +2 uC at (-0.5,0), q2 = -3 uC at (0.5,0), r = 1.0 m
+   Closed form: U = k*q1*q2/r = 8.99e9 * (2e-6)*(-3e-6) / 1 = -0.05394 J */
+const REFERENCE = {
+  q1:2e-6, q2:-3e-6, r:1.0,
+  closedFormJ: 8.99e9 * (2e-6) * (-3e-6) / 1.0
+};
+const REFERENCE_COMPUTED = pairEnergy(REFERENCE.q1, REFERENCE.q2, REFERENCE.r);
+safeAssert(Math.abs(REFERENCE_COMPUTED - REFERENCE.closedFormJ) < 1e-12,
+  "Reference case mismatch:", REFERENCE_COMPUTED, REFERENCE.closedFormJ);
+
+/** Assertion helper that never throws, even if console.assert isn't available
+    in the host environment (some embedded/webview consoles omit it). */
+function safeAssert(cond){
+  if(cond) return;
+  try{
+    const args = Array.prototype.slice.call(arguments, 1);
+    if(typeof console !== 'undefined' && typeof console.warn === 'function'){
+      console.warn.apply(console, ["Assertion failed:"].concat(args));
+    }
+  }catch(e){ /* never let a logging failure break the app */ }
+}
+
+/** Auto-scale a Joule value to J / mJ / uJ for display. Returns {value, unit}. */
+function formatEnergyAuto(Ujoules){
+  const a = Math.abs(Ujoules);
+  if(a === 0) return {value:0, unit:"mJ", text:"0 mJ"};
+  if(a >= 1) return mk(Ujoules,1,"J");
+  if(a >= 1e-3) return mk(Ujoules,1e-3,"mJ");
+  return mk(Ujoules,1e-6,"\u00b5J");
+  function mk(U,scale,unit){
+    const v = U/scale;
+    return {value:v, unit:unit, text:(v>=0?"":"") + v.toFixed(3) + " " + unit};
+  }
+}
+
+function formatSigned(n, digits){
+  const s = n.toFixed(digits);
+  return (n >= 0 ? "+" : "") + s;
+}
+
+/* ============================== STATE ============================== */
+
+const IDENTITY_COLORS = [
+  getVar('--id0'), getVar('--id1'), getVar('--id2'), getVar('--id3')
+];
+function getVar(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+
+const DEFAULT_SLOTS = [ {x:-1,y:0}, {x:1,y:0}, {x:1,y:1}, {x:-1,y:-1} ];
+
+let nextId = 0;
+let charges = []; // {id, q (signed integer uC, -5..5 excl 0), x, y (meters), colorIdx}
+let placeMode = "snap"; // "snap" | "free"
+let templateMode = null; // null | "triangle" | "square"
+let shapeSize = 1.0;
+let initialSnapshot = null; // {charges: deep copy, U: joules}
+let lastCheckedFeedback = null;
+
+const GRID_SPACING = 0.5;   // meters, snap grid
+const MIN_SEP_FREE = 0.3;   // meters, free-placement minimum separation
+const WORLD_HALF = 2.5;     // meters, canvas shows [-2.5, 2.5]
+
+function makeDefaultCharges(){
+  return [
+    {id:nextId++, q:1,  x:-1, y:0, colorIdx:0},
+    {id:nextId++, q:-1, x:1,  y:0, colorIdx:1}
+  ];
+}
+charges = makeDefaultCharges();
+
+/* ============================== DOM refs ============================== */
+
+const chargeListEl = document.getElementById('chargeList');
+const chargeCountEl = document.getElementById('chargeCount');
+const addBtn = document.getElementById('addChargeBtn');
+const resetBtn = document.getElementById('resetBtn');
+const triBtn = document.getElementById('triBtn');
+const sqBtn = document.getElementById('sqBtn');
+const shapeSliderWrap = document.getElementById('shapeSliderWrap');
+const shapeSizeInput = document.getElementById('shapeSize');
+const shapeSizeVal = document.getElementById('shapeSizeVal');
+const canvas = document.getElementById('scene');
+const ctx = canvas.getContext('2d');
+const showTotalEl = document.getElementById('showTotal');
+const showBreakdownEl = document.getElementById('showBreakdown');
+const totalUDisplay = document.getElementById('totalUDisplay');
+const breakdownWrap = document.getElementById('breakdownWrap');
+const pairRowsEl = document.getElementById('pairRows');
+const breakdownNote = document.getElementById('breakdownNote');
+const setInitialBtn = document.getElementById('setInitialBtn');
+const clearInitialBtn = document.getElementById('clearInitialBtn');
+const initialReadout = document.getElementById('initialReadout');
+const predictInput = document.getElementById('predictInput');
+const predictUnit = document.getElementById('predictUnit');
+const checkBtn = document.getElementById('checkBtn');
+const feedbackEl = document.getElementById('feedback');
+const modelCheckEl = document.getElementById('modelCheck');
+
+/* ============================== World <-> canvas mapping ============================== */
+
+function worldToCanvas(x,y){
+  const s = canvas.width / (2*WORLD_HALF);
+  return { cx: canvas.width/2 + x*s, cy: canvas.height/2 - y*s };
+}
+function canvasToWorld(cx,cy){
+  const s = canvas.width / (2*WORLD_HALF);
+  return { x:(cx - canvas.width/2)/s, y:(canvas.height/2 - cy)/s };
+}
+
+/* ============================== Rendering ============================== */
+
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  // grid
+  ctx.strokeStyle = "rgba(255,255,255,0.06)";
+  ctx.lineWidth = 1;
+  for(let g=-WORLD_HALF; g<=WORLD_HALF+1e-9; g+=GRID_SPACING){
+    const a = worldToCanvas(g,-WORLD_HALF);
+    const b = worldToCanvas(g, WORLD_HALF);
+    ctx.beginPath(); ctx.moveTo(a.cx,a.cy); ctx.lineTo(b.cx,b.cy); ctx.stroke();
+    const c = worldToCanvas(-WORLD_HALF,g);
+    const d = worldToCanvas(WORLD_HALF,g);
+    ctx.beginPath(); ctx.moveTo(c.cx,c.cy); ctx.lineTo(d.cx,d.cy); ctx.stroke();
+  }
+  // axes
+  ctx.strokeStyle = "rgba(255,255,255,0.16)";
+  const ax1 = worldToCanvas(-WORLD_HALF,0), ax2 = worldToCanvas(WORLD_HALF,0);
+  ctx.beginPath(); ctx.moveTo(ax1.cx,ax1.cy); ctx.lineTo(ax2.cx,ax2.cy); ctx.stroke();
+  const ay1 = worldToCanvas(0,-WORLD_HALF), ay2 = worldToCanvas(0,WORLD_HALF);
+  ctx.beginPath(); ctx.moveTo(ay1.cx,ay1.cy); ctx.lineTo(ay2.cx,ay2.cy); ctx.stroke();
+
+  // pairwise lines + distance labels (only when breakdown is shown)
+  if(showBreakdownEl.checked){
+    ctx.font = "11px " + getVar('--mono');
+    for(let i=0;i<charges.length;i++){
+      for(let j=i+1;j<charges.length;j++){
+        const a = worldToCanvas(charges[i].x, charges[i].y);
+        const b = worldToCanvas(charges[j].x, charges[j].y);
+        ctx.setLineDash([4,4]);
+        ctx.strokeStyle = "rgba(255,255,255,0.25)";
+        ctx.beginPath(); ctx.moveTo(a.cx,a.cy); ctx.lineTo(b.cx,b.cy); ctx.stroke();
+        ctx.setLineDash([]);
+        const r = dist(charges[i],charges[j]);
+        const mx = (a.cx+b.cx)/2, my=(a.cy+b.cy)/2;
+        ctx.fillStyle = "#c7ced8";
+        ctx.fillText(r.toFixed(2)+" m", mx+5, my-4);
+      }
+    }
+  }
+
+  // charges
+  charges.forEach(c=>{
+    const {cx,cy} = worldToCanvas(c.x,c.y);
+    const R = 15;
+    ctx.beginPath();
+    ctx.arc(cx,cy,R,0,2*Math.PI);
+    ctx.fillStyle = c.q > 0 ? getVar('--pos-fill') : getVar('--neg-fill');
+    ctx.fill();
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = IDENTITY_COLORS[c.colorIdx % IDENTITY_COLORS.length];
+    ctx.stroke();
+    ctx.fillStyle = "#0a0d11";
+    ctx.font = "bold 14px " + getVar('--sans');
+    ctx.textAlign = "center"; ctx.textBaseline="middle";
+    ctx.fillText(c.q>0?"+":"\u2212", cx, cy+1);
+    ctx.fillStyle = "#e6e9ee";
+    ctx.font = "12px " + getVar('--mono');
+    ctx.textAlign = "center";
+    ctx.fillText(formatSigned(c.q,0)+" \u00b5C", cx, cy+R+14);
+  });
+  ctx.textAlign="left"; ctx.textBaseline="alphabetic";
+}
+
+/* ============================== Charge list panel ============================== */
+
+function renderChargeList(){
+  chargeListEl.innerHTML = "";
+  chargeCountEl.textContent = "(" + charges.length + "/4)";
+  charges.forEach(c=>{
+    const row = document.createElement('div');
+    row.className = 'charge-row';
+    const swatch = document.createElement('div');
+    swatch.className = 'swatch';
+    swatch.style.background = IDENTITY_COLORS[c.colorIdx % IDENTITY_COLORS.length];
+    row.appendChild(swatch);
+
+    const pos = document.createElement('div');
+    pos.className = 'pos';
+    pos.textContent = "(" + c.x.toFixed(2) + ", " + c.y.toFixed(2) + ") m";
+    row.appendChild(pos);
+
+    const stepper = document.createElement('div');
+    stepper.className = 'stepper';
+    const minus = document.createElement('button');
+    minus.textContent = "\u2212";
+    minus.onclick = ()=>{ stepCharge(c.id,-1); };
+    const val = document.createElement('span');
+    val.className = 'val ' + (c.q>0?'pos':'neg');
+    val.textContent = formatSigned(c.q,0) + " \u00b5C";
+    const plus = document.createElement('button');
+    plus.textContent = "+";
+    plus.onclick = ()=>{ stepCharge(c.id,1); };
+    stepper.appendChild(minus); stepper.appendChild(val); stepper.appendChild(plus);
+    row.appendChild(stepper);
+
+    const rm = document.createElement('button');
+    rm.className = 'rm';
+    rm.textContent = "\u00d7";
+    rm.title = "Remove charge";
+    rm.onclick = ()=>{ removeCharge(c.id); };
+    row.appendChild(rm);
+
+    chargeListEl.appendChild(row);
+  });
+  addBtn.disabled = charges.length >= 4;
+  triBtn.disabled = charges.length !== 3;
+  sqBtn.disabled = charges.length !== 4;
+}
+
+function stepCharge(id, dir){
+  const c = charges.find(c=>c.id===id);
+  if(!c) return;
+  let q = c.q + dir;
+  if(q === 0) q = dir>0 ? 1 : -1; // skip zero
+  if(q > 5) q = 5;
+  if(q < -5) q = -5;
+  c.q = q;
+  onStateChanged();
+}
+
+function removeCharge(id){
+  charges = charges.filter(c=>c.id!==id);
+  templateMode = null;
+  updateShapeUI();
+  onStateChanged();
+}
+
+function nextFreeColorIdx(){
+  const used = new Set(charges.map(c=>c.colorIdx));
+  for(let i=0;i<4;i++) if(!used.has(i)) return i;
+  return 0;
+}
+
+function nextFreeSlot(){
+  for(const s of DEFAULT_SLOTS){
+    if(!charges.some(c=> Math.hypot(c.x-s.x,c.y-s.y) < 0.05 )) return s;
+  }
+  return {x:0,y:0};
+}
+
+addBtn.addEventListener('click', ()=>{
+  if(charges.length >= 4) return;
+  const slot = nextFreeSlot();
+  charges.push({id:nextId++, q:1, x:slot.x, y:slot.y, colorIdx: nextFreeColorIdx()});
+  templateMode = null;
+  updateShapeUI();
+  onStateChanged();
+});
+
+resetBtn.addEventListener('click', ()=>{
+  charges = makeDefaultCharges();
+  templateMode = null;
+  initialSnapshot = null;
+  showTotalEl.checked = false;
+  showBreakdownEl.checked = false;
+  predictInput.value = "";
+  clearFeedback();
+  updateShapeUI();
+  updateInitialUI();
+  onStateChanged();
+});
+
+/* ============================== Placement mode ============================== */
+
+document.querySelectorAll('input[name=placeMode]').forEach(r=>{
+  r.addEventListener('change', (e)=>{ placeMode = e.target.value; });
+});
+
+/* ============================== Templates (triangle / square) ============================== */
+
+function applyTemplate(kind){
+  const s = shapeSize;
+  let pts;
+  if(kind === 'triangle'){
+    pts = [
+      {x:0, y: s/Math.sqrt(3)},
+      {x:-s/2, y:-s/(2*Math.sqrt(3))},
+      {x: s/2, y:-s/(2*Math.sqrt(3))}
+    ];
+  } else {
+    const h = s/2;
+    pts = [ {x:-h,y:h}, {x:h,y:h}, {x:h,y:-h}, {x:-h,y:-h} ];
+  }
+  charges.forEach((c,i)=>{ c.x = pts[i].x; c.y = pts[i].y; });
+  templateMode = kind;
+  updateShapeUI();
+  onStateChanged();
+}
+
+triBtn.addEventListener('click', ()=> applyTemplate('triangle'));
+sqBtn.addEventListener('click', ()=> applyTemplate('square'));
+
+shapeSizeInput.addEventListener('input', ()=>{
+  shapeSize = parseFloat(shapeSizeInput.value);
+  shapeSizeVal.textContent = shapeSize.toFixed(1) + " m";
+  if(templateMode) applyTemplate(templateMode);
+});
+
+function updateShapeUI(){
+  shapeSliderWrap.style.display = templateMode ? 'block' : 'none';
+}
+
+/* ============================== Dragging ============================== */
+
+let dragId = null;
+
+function pickCharge(cx,cy){
+  for(let i=charges.length-1;i>=0;i--){
+    const c = charges[i];
+    const p = worldToCanvas(c.x,c.y);
+    if(Math.hypot(p.cx-cx,p.cy-cy) <= 16) return c;
+  }
+  return null;
+}
+
+function canvasEventPos(evt){
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width/rect.width, scaleY = canvas.height/rect.height;
+  const clientX = evt.touches? evt.touches[0].clientX : evt.clientX;
+  const clientY = evt.touches? evt.touches[0].clientY : evt.clientY;
+  return { cx:(clientX-rect.left)*scaleX, cy:(clientY-rect.top)*scaleY };
+}
+
+canvas.addEventListener('pointerdown', (evt)=>{
+  const {cx,cy} = canvasEventPos(evt);
+  const c = pickCharge(cx,cy);
+  if(c){ dragId = c.id; canvas.style.cursor='grabbing'; }
+});
+window.addEventListener('pointermove', (evt)=>{
+  if(dragId===null) return;
+  const {cx,cy} = canvasEventPos(evt);
+  let {x,y} = canvasToWorld(cx,cy);
+  x = clamp(x,-WORLD_HALF+0.1, WORLD_HALF-0.1);
+  y = clamp(y,-WORLD_HALF+0.1, WORLD_HALF-0.1);
+  const c = charges.find(c=>c.id===dragId);
+  if(!c) return;
+
+  if(placeMode === 'snap'){
+    const sx = Math.round(x/GRID_SPACING)*GRID_SPACING;
+    const sy = Math.round(y/GRID_SPACING)*GRID_SPACING;
+    const occupied = charges.some(o=>o.id!==c.id && Math.hypot(o.x-sx,o.y-sy) < 0.05);
+    if(!occupied){ c.x = sx; c.y = sy; }
+  } else {
+    const ok = charges.every(o=> o.id===c.id || Math.hypot(o.x-x,o.y-y) >= MIN_SEP_FREE);
+    if(ok){ c.x = x; c.y = y; }
+  }
+  templateMode = null;
+  updateShapeUI();
+  onStateChanged();
+});
+window.addEventListener('pointerup', ()=>{ dragId=null; canvas.style.cursor='grab'; });
+
+function clamp(v,lo,hi){ return Math.max(lo,Math.min(hi,v)); }
+
+/* ============================== Energy panel ============================== */
+
+function renderEnergyPanel(){
+  const U = totalEnergy(charges);
+  const fmt = formatEnergyAuto(U);
+
+  if(charges.length < 2){
+    totalUDisplay.innerHTML = '<span class="zero-note">Need at least two charges for a potential energy.</span>';
+  } else if(showTotalEl.checked){
+    totalUDisplay.textContent = (U>=0?"+":"") + fmt.text;
+  } else {
+    totalUDisplay.innerHTML = '<span class="zero-note">hidden &mdash; toggle above or make a prediction</span>';
+  }
+
+  breakdownWrap.style.display = showBreakdownEl.checked ? 'block' : 'none';
+  if(showBreakdownEl.checked){
+    pairRowsEl.innerHTML = "";
+    if(charges.length < 2){
+      breakdownNote.textContent = "Add a second charge to see pairwise terms.";
+    } else {
+      breakdownNote.textContent = "";
+      for(let i=0;i<charges.length;i++){
+        for(let j=i+1;j<charges.length;j++){
+          const a = charges[i], b = charges[j];
+          const r = dist(a,b);
+          const u = pairEnergy(a.q*1e-6, b.q*1e-6, r);
+          const ufmt = formatEnergyAuto(u);
+          const row = document.createElement('div');
+          row.className = 'pair-row';
+          row.innerHTML =
+            '<span class="pair-dots">' +
+              '<span style="background:'+IDENTITY_COLORS[a.colorIdx%4]+'"></span>' +
+              '<span style="background:'+IDENTITY_COLORS[b.colorIdx%4]+'"></span>' +
+            '</span>' +
+            '<span>U = k &times; ' +
+              '<span class="frac"><span class="num">('+formatSigned(a.q,0)+'&nbsp;&micro;C)('+formatSigned(b.q,0)+'&nbsp;&micro;C)</span>' +
+              '<span class="den">'+r.toFixed(2)+'&nbsp;m</span></span>' +
+            '</span>' +
+            '<span class="pair-total">'+(u>=0?"+":"")+ufmt.text+'</span>';
+          pairRowsEl.appendChild(row);
+        }
+      }
+      const totalRow = document.createElement('div');
+      totalRow.className = 'pair-row';
+      totalRow.style.borderTop = "1px solid var(--border)";
+      totalRow.style.marginTop = "2px";
+      totalRow.innerHTML = '<span style="color:var(--muted);">Sum of all pairs</span>' +
+        '<span class="pair-total" style="color:var(--amber);">'+(U>=0?"+":"")+fmt.text+'</span>';
+      pairRowsEl.appendChild(totalRow);
+    }
+  }
+}
+
+/* ============================== Initial state / ΔU ============================== */
+
+setInitialBtn.addEventListener('click', ()=>{
+  initialSnapshot = {
+    charges: JSON.parse(JSON.stringify(charges)),
+    U: totalEnergy(charges)
+  };
+  updateInitialUI();
+});
+clearInitialBtn.addEventListener('click', ()=>{
+  initialSnapshot = null;
+  updateInitialUI();
+});
+
+function updateInitialUI(){
+  clearInitialBtn.disabled = !initialSnapshot;
+  if(!initialSnapshot){
+    initialReadout.innerHTML = '<span class="muted">No initial state saved yet.</span>';
+    return;
+  }
+  const Ucur = totalEnergy(charges);
+  const dU = Ucur - initialSnapshot.U;
+  const dFmt = formatEnergyAuto(dU);
+  let html = '<div>&Delta;U since initial state: <b style="color:var(--amber);">' + (dU>=0?"+":"") + dFmt.text + '</b></div>';
+  if(showTotalEl.checked){
+    const iFmt = formatEnergyAuto(initialSnapshot.U);
+    const cFmt = formatEnergyAuto(Ucur);
+    html += '<div class="muted" style="margin-top:4px;">Initial U: ' + (initialSnapshot.U>=0?"+":"") + iFmt.text +
+            ' &nbsp;|&nbsp; Current U: ' + (Ucur>=0?"+":"") + cFmt.text + '</div>';
+  }
+  initialReadout.innerHTML = html;
+}
+
+/* ============================== Prediction / grading ============================== */
+
+checkBtn.addEventListener('click', ()=>{
+  const raw = parseFloat(predictInput.value);
+  if(isNaN(raw)){
+    showFeedback(false, "Enter a numeric value first.");
+    return;
+  }
+  const unitScale = parseFloat(predictUnit.value);
+  const predictedJ = raw*unitScale;
+  const actualJ = totalEnergy(charges);
+  const tol = Math.max(0.03*Math.abs(actualJ), 5e-5);
+  const correct = Math.abs(predictedJ - actualJ) <= tol;
+  showFeedback(correct, correct ? "Correct! That matches the system's potential energy within tolerance."
+                                 : "Not quite \u2014 check your signs, distances, and that you summed every pair.");
+});
+
+function showFeedback(correct,msg){
+  feedbackEl.className = 'feedback ' + (correct?'correct':'incorrect');
+  feedbackEl.textContent = msg;
+}
+function clearFeedback(){
+  feedbackEl.className = 'feedback';
+  feedbackEl.textContent = '';
+}
+
+/* ============================== Model check panel ============================== */
+
+function renderModelCheck(){
+  const pass = Math.abs(REFERENCE_COMPUTED - REFERENCE.closedFormJ) < 1e-9;
+  const rFmt = formatEnergyAuto(REFERENCE_COMPUTED);
+  const cFmt = formatEnergyAuto(REFERENCE.closedFormJ);
+  modelCheckEl.innerHTML =
+    '<div class="line"><span>Reference case</span><span class="badge '+(pass?'pass':'fail')+'">'+(pass?'PASS':'FAIL')+'</span></div>' +
+    '<div class="line"><span>q1 = +2 &micro;C, q2 = &minus;3 &micro;C, r = 1.00 m</span></div>' +
+    '<div class="line"><span>Computed (superposition)</span><b>'+(REFERENCE_COMPUTED>=0?"+":"")+rFmt.text+'</b></div>' +
+    '<div class="line"><span>Closed form k q1 q2 / r</span><b>'+(REFERENCE.closedFormJ>=0?"+":"")+cFmt.text+'</b></div>' +
+    '<div style="margin-top:6px;color:var(--muted);">Independent of whatever is currently placed in the live scene above.</div>';
+}
+
+/* ============================== Toggles wiring ============================== */
+
+showBreakdownEl.addEventListener('change', ()=>{
+  if(showBreakdownEl.checked) showTotalEl.checked = true;
+  onStateChanged();
+});
+showTotalEl.addEventListener('change', ()=>{
+  if(!showTotalEl.checked && showBreakdownEl.checked) showBreakdownEl.checked = false;
+  onStateChanged();
+});
+
+/* ============================== Master update ============================== */
+
+function onStateChanged(){
+  renderChargeList();
+  draw();
+  renderEnergyPanel();
+  updateInitialUI();
+  clearFeedback();
+}
+
+/* ============================== Init ============================== */
+
+updateShapeUI();
+renderModelCheck();
+onStateChanged();
+
+})();
+</script>
+</body>
+</html>
