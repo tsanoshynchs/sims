@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Center field: from point charges to a capacitor</title>
+<style>
+:root{
+  color-scheme:light dark;
+  --bg:#ffffff;--surface-1:#f5f4ef;--text-primary:#1f1e1d;--text-secondary:#5f5e5a;
+  --border:rgba(0,0,0,.12);--border-strong:rgba(0,0,0,.25);--border-stronger:rgba(0,0,0,.4);
+  --radius:8px;--font-sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#1f1e1d;--surface-1:#2c2b29;--text-primary:#f1efe8;--text-secondary:#b4b2a9;
+  --border:rgba(255,255,255,.14);--border-strong:rgba(255,255,255,.28);--border-stronger:rgba(255,255,255,.45);}
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text-primary);font-family:var(--font-sans);font-size:16px;line-height:1.7}
+main{max-width:680px;margin:0 auto;padding:1.5rem 1rem 2rem}
+h1{font-size:22px;font-weight:500;margin:0 0 .25rem}
+p.lede{margin:0 0 1.25rem;color:var(--text-secondary);font-size:15px}
+button{font:inherit;font-size:14px;color:var(--text-primary);background:transparent;border:.5px solid var(--border-strong);border-radius:var(--radius);padding:6px 14px;cursor:pointer}
+button:hover{background:var(--surface-1)}
+button:active{transform:scale(.98)}
+input[type=range]{accent-color:var(--text-primary)}
+:focus-visible{outline:2px solid #378ADD;outline-offset:2px}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+</style>
+</head>
+<body>
+<main>
+<h1>Center field: from point charges to a capacitor</h1>
+<p class="lede">Stretch two opposite charged sources and watch the field at the midpoint approach the ideal-capacitor limit.</p>
+
+<h2 class="sr-only">Interactive: stretch two opposite charged rows or plates and see how the field at the center and its distance falloff change.</h2>
+<div style="display:flex;gap:8px;margin:0 0 1rem;flex-wrap:wrap;align-items:center;">
+  <button id="m-row" type="button">Two rows of charge</button>
+  <button id="m-plate" type="button">Two square plates</button>
+</div>
+<div style="display:flex;align-items:center;gap:12px;margin:0 0 1rem;">
+  <label for="s" style="font-size:14px;color:var(--text-secondary);white-space:nowrap;">Width ÷ gap</label>
+  <input type="range" id="s" min="0" max="100" step="1" value="30" style="flex:1;">
+  <span id="rv" style="font-size:14px;font-weight:500;min-width:44px;text-align:right;">1</span>
+</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:0 0 1rem;">
+  <div style="background:var(--surface-1);border-radius:var(--radius);padding:1rem;">
+    <div style="font-size:13px;color:var(--text-secondary);">Field ÷ ideal capacitor field</div>
+    <div id="mf" style="font-size:24px;font-weight:500;">0%</div>
+  </div>
+  <div style="background:var(--surface-1);border-radius:var(--radius);padding:1rem;">
+    <div style="font-size:13px;color:var(--text-secondary);">Falloff with gap, 1/d^n</div>
+    <div id="mn" style="font-size:24px;font-weight:500;">n = 2.0</div>
+  </div>
+  <div style="background:var(--surface-1);border-radius:var(--radius);padding:1rem;">
+    <div style="font-size:13px;color:var(--text-secondary);">It behaves like</div>
+    <div id="mb" style="font-size:18px;font-weight:500;padding-top:4px;">point charges</div>
+  </div>
+</div>
+<svg id="g" viewBox="0 0 680 210" width="100%" role="img" aria-label="Side view of two opposite charged rows with the center field arrow"></svg>
+<svg id="p" viewBox="0 0 680 230" width="100%" role="img" aria-label="Field at center as a fraction of the ideal, versus width over gap" style="margin-top:1rem;"></svg>
+</main>
+<script>
+var mode='row';
+function fr(r){return r/Math.sqrt(r*r+1);}
+function fp(r){return (2/Math.PI)*Math.atan(r*r/Math.sqrt(1+2*r*r));}
+function F(r){return mode==='row'?fr(r):fp(r);}
+function nexp(r){
+  if(mode==='row')return 1+1/(r*r+1);
+  var k=1.001;return (Math.log(fp(r*k))-Math.log(fp(r)))/Math.log(k);
+}
+function ratio(){var s=+document.getElementById('s').value;return Math.pow(10,-1+s/100*2.5);}
+var T='style="fill:var(--text-secondary);font-size:12px;font-family:var(--font-sans)"';
+function drawG(r){
+  var cx=340,y1=55,y2=155,Lpx=r*100,half=Math.min(Lpx/2,330),clip=Lpx/2>330;
+  var o='';
+  o+='<rect x="'+(cx-half)+'" y="'+(y1-3)+'" width="'+(2*half)+'" height="6" rx="2" fill="#D85A30" opacity="0.25"/>';
+  o+='<rect x="'+(cx-half)+'" y="'+(y2-3)+'" width="'+(2*half)+'" height="6" rx="2" fill="#378ADD" opacity="0.25"/>';
+  var n=Math.max(1,Math.floor(2*half/14));
+  for(var i=0;i<n;i++){
+    var x=n===1?cx:cx-half+7+i*((2*half-14)/(n-1));
+    o+='<circle cx="'+x.toFixed(1)+'" cy="'+y1+'" r="3.5" fill="#D85A30"/>';
+    o+='<circle cx="'+x.toFixed(1)+'" cy="'+y2+'" r="3.5" fill="#378ADD"/>';
+  }
+  if(clip){
+    o+='<text x="8" y="'+(y1-12)+'" '+T+'>continues</text><text x="672" y="'+(y1-12)+'" text-anchor="end" '+T+'>continues</text>';
+  }
+  var f=F(r),len=Math.max(8,f*84),ay=105-len/2,by=105+len/2;
+  o+='<line x1="'+cx+'" y1="'+ay+'" x2="'+cx+'" y2="'+(by-8)+'" stroke="var(--text-primary)" stroke-width="2.5"/>';
+  o+='<polygon points="'+(cx-6)+','+(by-9)+' '+(cx+6)+','+(by-9)+' '+cx+','+by+'" fill="var(--text-primary)"/>';
+  o+='<text x="'+(cx+14)+'" y="108" '+T+'>E at center</text>';
+  o+='<line x1="24" y1="'+y1+'" x2="24" y2="'+y2+'" stroke="var(--border-strong)" stroke-width="1"/>';
+  o+='<text x="34" y="108" '+T+'>gap d</text>';
+  o+='<text x="'+cx+'" y="30" text-anchor="middle" '+T+'>+ charge</text>';
+  o+='<text x="'+cx+'" y="196" text-anchor="middle" '+T+'>− charge</text>';
+  document.getElementById('g').innerHTML=o;
+}
+function drawP(r){
+  var L=50,R=660,Tp=16,B=190,lo=-1,hi=1.5;
+  function X(v){return L+(Math.log10(v)-lo)/(hi-lo)*(R-L);}
+  function Y(v){return B-v*(B-Tp);}
+  var o='';
+  [0,0.5,1].forEach(function(v){
+    o+='<line x1="'+L+'" y1="'+Y(v)+'" x2="'+R+'" y2="'+Y(v)+'" stroke="var(--border)" stroke-width="0.5"/>';
+    o+='<text x="'+(L-8)+'" y="'+(Y(v)+4)+'" text-anchor="end" '+T+'>'+Math.round(v*100)+'%</text>';
+  });
+  [0.1,1,10].forEach(function(v){
+    o+='<line x1="'+X(v)+'" y1="'+B+'" x2="'+X(v)+'" y2="'+(B+4)+'" stroke="var(--border-strong)"/>';
+    o+='<text x="'+X(v)+'" y="'+(B+18)+'" text-anchor="middle" '+T+'>'+v+'</text>';
+  });
+  function path(fn,col,dash){
+    var d='';
+    for(var i=0;i<=120;i++){
+      var v=Math.pow(10,lo+(hi-lo)*i/120);
+      d+=(i?'L':'M')+X(v).toFixed(1)+' '+Y(fn(v)).toFixed(1);
+    }
+    return '<path d="'+d+'" fill="none" stroke="'+col+'" stroke-width="'+(dash?1.5:2.5)+'"'+(dash?' stroke-dasharray="4 4" opacity="0.7"':'')+'/>';
+  }
+  o+=path(mode==='row'?fp:fr,'#888780',true);
+  o+=path(F,mode==='row'?'#1D9E75':'#7F77DD',false);
+  var x=X(r),y=Y(F(r));
+  o+='<line x1="'+x+'" y1="'+Tp+'" x2="'+x+'" y2="'+B+'" stroke="var(--border-strong)" stroke-dasharray="2 3"/>';
+  o+='<circle cx="'+x+'" cy="'+y+'" r="5" fill="var(--text-primary)"/>';
+  o+='<text x="'+((L+R)/2)+'" y="'+(B+40)+'" text-anchor="middle" '+T+'>width ÷ gap (log scale)</text>';
+  o+='<text x="'+(L+6)+'" y="'+(Y(0)-8)+'" '+T+'>point-like, falls as 1/d²</text>';
+  o+='<text x="'+(R-4)+'" y="'+(Y(1)+16)+'" text-anchor="end" '+T+'>ideal, constant</text>';
+  document.getElementById('p').innerHTML=o;
+}
+function upd(){
+  var r=ratio(),f=F(r),n=nexp(r);
+  document.getElementById('rv').textContent=r<10?r.toFixed(1):Math.round(r);
+  document.getElementById('mf').textContent=Math.round(f*100)+'%';
+  document.getElementById('mn').textContent='n = '+Math.max(0,n).toFixed(1);
+  var b;
+  if(mode==='row'){b=n>1.7?'point charges':(n>1.3?'in between':'long line charges');}
+  else{b=n>1.7?'point charges':(n>0.8?'finite plates':(n>0.25?'nearly ideal':'ideal capacitor'));}
+  document.getElementById('mb').textContent=b;
+  drawG(r);drawP(r);
+}
+function setMode(m){
+  mode=m;
+  var a=document.getElementById('m-row'),c=document.getElementById('m-plate');
+  a.style.background=m==='row'?'var(--surface-1)':'transparent';
+  a.style.borderColor=m==='row'?'var(--border-stronger)':'';
+  c.style.background=m==='plate'?'var(--surface-1)':'transparent';
+  c.style.borderColor=m==='plate'?'var(--border-stronger)':'';
+  upd();
+}
+document.getElementById('s').addEventListener('input',upd);
+document.getElementById('m-row').addEventListener('click',function(){setMode('row');});
+document.getElementById('m-plate').addEventListener('click',function(){setMode('plate');});
+setMode('row');
+</script>
+</body>
+</html>
