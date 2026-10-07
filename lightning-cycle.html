@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="A run-it-yourself model of the full lightning cycle: charge separation in the cloud, ground polarization, ionized air, and the strike.">
+<style>
+:root{color-scheme:light}
+body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+<title>Lightning Cycle</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+/* Layout concept: a storyline strip (the six stages) over one live storm scene,
+   with three "zoom in" windows beside the controls. Scene is always a night sky;
+   the page around it follows the viewer's light/dark theme. */
+:root{
+  --bg:#eef2f7; --surface:#ffffff; --surface2:#e6ebf3; --ink:#0f1b2b; --muted:#495a6e; --line:#cbd5e3;
+  --accent:#2347c7; --accent-ink:#ffffff; --bolt:#9a5600; --bolt-soft:#fff1d6;
+  --neg:#1f5fd0; --pos:#c0332b; --good:#0f7a57; --bad:#b3261e; --focus:#2347c7;
+  --f-body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-head:"Bricolage Grotesque","Atkinson Hyperlegible",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0c121b; --surface:#151e2c; --surface2:#1d2838; --ink:#e7eef8; --muted:#a3b2c6; --line:#2b3a50;
+    --accent:#86a8ff; --accent-ink:#0b1424; --bolt:#ffc94a; --bolt-soft:#3a2d0c;
+    --neg:#6ea6ff; --pos:#ff7d72; --good:#3ccf9c; --bad:#ff8a80; --focus:#ffc94a; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0c121b; --surface:#151e2c; --surface2:#1d2838; --ink:#e7eef8; --muted:#a3b2c6; --line:#2b3a50;
+  --accent:#86a8ff; --accent-ink:#0b1424; --bolt:#ffc94a; --bolt-soft:#3a2d0c;
+  --neg:#6ea6ff; --pos:#ff7d72; --good:#3ccf9c; --bad:#ff8a80; --focus:#ffc94a; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.45;padding-inline:16px;padding-block:20px 40px}
+.wrap{max-width:1200px;margin-inline:auto;display:flex;flex-direction:column;gap:18px}
+h1,h2,h3{font-family:var(--f-head);margin:0;text-wrap:balance;line-height:1.15}
+h1{font-size:clamp(1.8rem,4vw,2.5rem);font-weight:800;letter-spacing:-0.01em}
+h2{font-size:1.15rem;font-weight:800}
+h3{font-size:.98rem;font-weight:600}
+p{margin:0}
+.lead{color:var(--muted);max-width:70ch;margin-top:6px}
+.muted{color:var(--muted)}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+
+/* Sticky run bar */
+.toolbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;display:flex;align-items:center;gap:8px;padding:8px 0;background:var(--bg)}
+.toolbar .now{margin-left:6px;font-weight:700;color:var(--bolt);font-size:.95rem;min-width:0}
+
+/* Stage strip */
+.stages{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+.stage{display:flex;align-items:center;gap:8px;padding:9px 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--muted);font-weight:700;font-size:.9rem;line-height:1.2;transition:background .2s,border-color .2s,color .2s}
+.stage .n{flex:none;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-family:var(--f-mono);font-size:.8rem;background:var(--surface2);color:var(--muted)}
+.stage.done{color:var(--ink)}
+.stage.done .n{background:var(--good);color:var(--accent-ink)}
+.stage.active{border-color:var(--bolt);background:var(--bolt-soft);color:var(--ink);box-shadow:0 0 0 2px var(--bolt)}
+.stage.active .n{background:var(--bolt);color:var(--accent-ink)}
+
+.layout{display:grid;grid-template-columns:minmax(0,1.75fr) minmax(290px,1fr);gap:20px;align-items:start}
+.col{display:flex;flex-direction:column;gap:16px;min-width:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;min-width:0}
+.card.flush{padding:0;overflow:hidden}
+.scene-wrap{border-radius:14px;overflow:hidden;border:1px solid var(--line);background:#0a1124}
+canvas{display:block;width:100%;height:auto;aspect-ratio:8/5}
+.zoom canvas{aspect-ratio:8/5;border-radius:8px;background:#141c33}
+
+.caption{display:flex;flex-direction:column;gap:6px}
+.caption .tag{font-family:var(--f-mono);font-size:.78rem;color:var(--bolt);text-transform:uppercase;letter-spacing:.08em}
+.caption .txt{max-width:68ch}
+.caption [aria-live]{display:flex;flex-direction:column;gap:6px}
+.paused-note{color:var(--bolt);font-weight:700}
+
+.zooms{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.zoom{display:flex;flex-direction:column;gap:8px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--surface);transition:border-color .2s,box-shadow .2s}
+.zoom.active{border-color:var(--bolt);box-shadow:0 0 0 2px var(--bolt)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.viewbar{border:0;padding:0;margin:0;scroll-margin-top:80px}
+.zoom .head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.zoom button{min-height:36px;padding:6px 12px;font-size:.85rem;flex:none}
+.zoom .small{font-size:.86rem;color:var(--muted);line-height:1.35}
+.zoom .count{font-family:var(--f-mono);font-size:.84rem;color:var(--ink)}
+
+/* Controls */
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+button{font:inherit;font-weight:700;border-radius:10px;border:1px solid var(--line);background:var(--surface2);color:var(--ink);padding:10px 16px;cursor:pointer;min-height:44px}
+button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);min-width:110px}
+.field{display:flex;flex-direction:column;gap:4px;margin-top:14px}
+.field label,.field legend{font-weight:700;font-size:.95rem}
+.field .vals{display:flex;justify-content:space-between;color:var(--muted);font-size:.82rem}
+.field .out{font-family:var(--f-mono);color:var(--ink);font-size:.86rem}
+input[type=range]{width:100%;accent-color:var(--accent);height:28px;margin:0}
+fieldset{border:0;padding:0;margin:0}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg label{display:inline-flex}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg span{padding:9px 12px;border:1px solid var(--line);border-radius:9px;background:var(--surface2);font-weight:700;font-size:.9rem;cursor:pointer;min-height:40px;display:inline-flex;align-items:center}
+.seg input:checked+span{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.seg input:focus-visible+span{outline:3px solid var(--focus);outline-offset:2px}
+.check{display:flex;gap:8px;align-items:flex-start;font-size:.9rem;margin-top:10px}
+.check input{margin-top:3px;width:18px;height:18px;accent-color:var(--accent)}
+
+.meter{margin-top:12px}
+.meter:first-of-type{margin-top:0}
+.meter-head{display:flex;justify-content:space-between;gap:8px;font-weight:700;font-size:.92rem;margin-bottom:5px}
+.meter-head .mono{font-weight:500;font-size:.84rem;color:var(--muted)}
+.bar{position:relative;height:14px;border-radius:8px;background:var(--surface2);overflow:hidden;border:1px solid var(--line)}
+.bar i{position:absolute;inset:0 auto 0 0;width:0;background:var(--neg);transition:width .08s linear}
+.bar.pull i{background:var(--bolt)}
+.bar .mark{position:absolute;top:-2px;bottom:-2px;width:3px;background:var(--ink)}
+.mark-label{display:flex;justify-content:flex-end;font-size:.78rem;color:var(--muted);margin-top:3px}
+
+dl.stats{display:grid;grid-template-columns:1fr auto;gap:6px 12px;margin:0}
+dl.stats dt{color:var(--muted);font-size:.92rem}
+dl.stats dd{margin:0;font-family:var(--f-mono);font-variant-numeric:tabular-nums;text-align:right}
+.card h3+.ledger{margin-top:10px}
+.ledger{display:grid;grid-template-columns:1fr auto;gap:4px 12px;font-size:.92rem;margin:0}
+.ledger div:nth-child(even){font-family:var(--f-mono);text-align:right}
+.ledger .total{font-weight:700;border-top:1px solid var(--line);padding-top:6px}
+.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-weight:700;font-size:.78rem;font-family:var(--f-mono)}
+.badge.ok{background:var(--good);color:var(--accent-ink)}
+.badge.fail{background:var(--bad);color:var(--accent-ink)}
+details summary{cursor:pointer;font-weight:700}
+details ul,details ol{margin:10px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:.92rem}
+.checks{display:flex;flex-direction:column;gap:8px;margin-top:10px;font-size:.9rem}
+.checks div{display:flex;justify-content:space-between;gap:10px;align-items:center}
+
+@media (max-width:980px){
+  .layout{grid-template-columns:minmax(0,1fr)}
+  .stages{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media (max-width:760px){
+  .zooms{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:420px){
+  .stages{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (prefers-reduced-motion:reduce){
+  .stage,.zoom,.bar i{transition:none}
+}
+</style>
+
+</head>
+<body>
+<main class="wrap">
+  <header>
+    <h1>Lightning Cycle</h1>
+    <p class="lead">Pick the starting conditions, press Run, and follow one storm from rising air to a lightning strike. Each stage lights up as it happens. The three small windows zoom in on what the charges are doing. Click one to make it big.</p>
+  </header>
+
+  <div class="toolbar" role="group" aria-label="Run controls">
+    <button class="primary" id="runBtn" type="button">Run</button>
+    <button id="resetBtn" type="button">Reset</button>
+    <span class="now" id="stageNow">Ready</span>
+  </div>
+
+  <ol class="stages" id="stages" aria-label="Stages of the lightning cycle"></ol>
+
+  <div class="layout">
+    <div class="col">
+      <fieldset class="viewbar">
+        <legend class="sr">Choose the big view</legend>
+        <div class="seg" id="viewSeg">
+          <label><input type="radio" name="view" value="scene" checked><span>The storm</span></label>
+          <label><input type="radio" name="view" value="cloud"><span>Inside the cloud</span></label>
+          <label><input type="radio" name="view" value="air"><span>In the air</span></label>
+          <label><input type="radio" name="view" value="ground"><span>In the ground</span></label>
+        </div>
+      </fieldset>
+
+      <div class="scene-wrap">
+        <canvas id="mainCv" role="img"></canvas>
+      </div>
+
+      <section class="card caption" id="viewCap" aria-label="About this zoomed-in view" hidden>
+        <div class="tag" id="vcTag"></div>
+        <h2 id="vcTitle"></h2>
+        <p class="txt" id="vcText"></p>
+        <p class="txt mono" id="vcCount"></p>
+        <p class="muted txt" id="vcLegend"></p>
+      </section>
+
+      <section class="card caption" aria-label="What is happening now">
+        <div class="tag" id="capTag">Ready</div>
+        <div aria-live="polite">
+          <h2 id="capTitle">Set the starting conditions</h2>
+          <p class="txt" id="capText">Use the sliders, then press Run. Turn on "Pause at each stage" to stop and talk about every step.</p>
+        </div>
+        <p class="muted txt" id="capExtra"></p>
+        <p class="paused-note" id="pauseNote" hidden></p>
+      </section>
+
+      <section class="zooms" aria-label="Other views. Choose one to make it big.">
+        <div class="zoom" id="th0">
+          <div class="head"><h3 id="thTitle0"></h3><button type="button" id="thBtn0">Make big</button></div>
+          <canvas id="thCv0" role="img"></canvas>
+          <p class="small" id="thCap0"></p>
+          <p class="count" id="thCount0"></p>
+        </div>
+        <div class="zoom" id="th1">
+          <div class="head"><h3 id="thTitle1"></h3><button type="button" id="thBtn1">Make big</button></div>
+          <canvas id="thCv1" role="img"></canvas>
+          <p class="small" id="thCap1"></p>
+          <p class="count" id="thCount1"></p>
+        </div>
+        <div class="zoom" id="th2">
+          <div class="head"><h3 id="thTitle2"></h3><button type="button" id="thBtn2">Make big</button></div>
+          <canvas id="thCv2" role="img"></canvas>
+          <p class="small" id="thCap2"></p>
+          <p class="count" id="thCount2"></p>
+        </div>
+      </section>
+    </div>
+
+    <aside class="col" aria-label="Controls and readouts">
+      <section class="card" aria-label="Controls">
+        <fieldset class="field" style="margin-top:0">
+          <legend>Speed</legend>
+          <div class="seg" id="speedSeg">
+            <label><input type="radio" name="speed" value="0.5"><span>Slow</span></label>
+            <label><input type="radio" name="speed" value="1" checked><span>Normal</span></label>
+            <label><input type="radio" name="speed" value="2"><span>Fast</span></label>
+          </div>
+        </fieldset>
+        <label class="check"><input type="checkbox" id="autoPause"><span>Pause at each stage so we can talk about it</span></label>
+        <label class="check"><input type="checkbox" id="soften"><span>Soften the flash</span></label>
+
+        <h2 style="margin-top:20px">Starting conditions</h2>
+        <div class="field">
+          <label for="up">Warm, moist air rising</label>
+          <input type="range" id="up" min="1" max="10" step="1" value="6">
+          <div class="vals"><span>Weak</span><span class="out" id="upOut"></span><span>Strong</span></div>
+        </div>
+        <div class="field">
+          <label for="ice">Ice crystals in the cloud</label>
+          <input type="range" id="ice" min="1" max="10" step="1" value="6">
+          <div class="vals"><span>Few</span><span class="out" id="iceOut"></span><span>Lots</span></div>
+        </div>
+        <div class="field">
+          <label for="height">Height of the cloud's bottom</label>
+          <input type="range" id="height" min="1" max="10" step="1" value="5">
+          <div class="vals"><span>Low</span><span class="out" id="heightOut"></span><span>High</span></div>
+        </div>
+        <fieldset class="field">
+          <legend>What is on the ground</legend>
+          <div class="seg" id="objSeg">
+            <label><input type="radio" name="obj" value="field" checked><span>Open field</span></label>
+            <label><input type="radio" name="obj" value="tree"><span>Tall tree</span></label>
+            <label><input type="radio" name="obj" value="rod"><span>Building with lightning rod</span></label>
+          </div>
+        </fieldset>
+      </section>
+
+      <section class="card" aria-label="Meters">
+        <div class="meter">
+          <div class="meter-head"><span>Charge built up at the cloud's bottom (−)</span><span class="mono" id="mCharge"></span></div>
+          <div class="bar"><i id="bCharge"></i></div>
+        </div>
+        <div class="meter">
+          <div class="meter-head"><span>Pull between cloud and ground</span><span class="mono" id="mPull"></span></div>
+          <div class="bar pull"><i id="bPull"></i><b class="mark" id="markT" style="left:66.6%"></b></div>
+          <div class="mark-label" id="markLabel">Black line: the pull where air gives way</div>
+        </div>
+        <dl class="stats" style="margin-top:16px">
+          <dt>Strikes so far</dt><dd id="sStrikes">0</dd>
+          <dt>Run time</dt><dd id="sTime">0.0 s</dd>
+          <dt>Time to first strike</dt><dd id="sFirst">–</dd>
+          <dt>Time since last strike</dt><dd id="sSince">–</dd>
+          <dt>Average time between strikes</dt><dd id="sAvg">–</dd>
+        </dl>
+      </section>
+
+      <section class="card" aria-label="Where the charge is">
+        <h3>Where is all the charge?</h3>
+        <div class="ledger" id="ledger"></div>
+        <p class="muted" style="font-size:.86rem;margin-top:8px">Electrons are moved around. They are never made or destroyed, so the total stays zero.</p>
+      </section>
+
+      <section class="card">
+        <details>
+          <summary>Try this</summary>
+          <ol>
+            <li>Run with the default settings and turn on "Pause at each stage." At every stop, point to where the extra electrons are.</li>
+            <li>Predict: will a low cloud or a high cloud strike first? Run both and compare "Time to first strike."</li>
+            <li>Choose the building with the lightning rod. What changes about where the strike connects, and how soon it happens?</li>
+            <li>Turn the rising air and the ice way down. How does that change the time between strikes?</li>
+          </ol>
+        </details>
+      </section>
+
+      <section class="card">
+        <details>
+          <summary>Model check and what this model simplifies</summary>
+          <div class="checks" id="checks"></div>
+          <ul>
+            <li>Not to scale. Real thunderclouds are miles tall and hold far more charge. Amounts here are "charge units," not real measurements.</li>
+            <li>"Pull" is a simple stand-in. It grows with more charge and shrinks with more distance, like Coulomb's law. It is not a measured force, and this model does not calculate the electric field.</li>
+            <li>Air "gives way" at one fixed pull. Real air depends on more things, such as humidity and pressure.</li>
+            <li>Each collision moves one electron. Real clouds have enormous numbers of collisions of many kinds.</li>
+            <li>The lightning path is drawn randomly. Every real strike takes a different path.</li>
+            <li>After a strike, almost all of the extra electrons at the cloud's bottom reach the ground, and charging pauses for a moment before it starts again. The cloud's top stays positive. Real storms also have flashes inside the cloud.</li>
+            <li>The ground starts neutral. Only polarization and the electrons from a strike are shown.</li>
+          </ul>
+        </details>
+      </section>
+    </aside>
+  </div>
+</main>
+
+<script>
+'use strict';
+/* =====================================================================
+   1. CONSTANTS  (scene geometry in canvas units, and model settings)
+   ===================================================================== */
+const TAU = Math.PI * 2;
+const SCENE = { W: 960, H: 600, GROUND_Y: 500, UNIT: 220, CLOUD_X0: 170, CLOUD_X1: 790, OBJ_X: 690 };
+const ZOOM  = { W: 320, H: 200 };
+const MODEL = {
+  airThreshold: 1.0,         // pull at which air gives way (relative units)
+  Qcap: 4,                   // most charge the cloud bottom can hold (relative units)
+  chargePerCollision: 0.02,  // charge moved by one collision (relative units)
+  collisionsPerSec: 34,      // collisions per second at full updraft, full ice, full-grown cloud
+  growthRate: 0.45,          // how fast the cloud grows (per second at full updraft)
+  strikeDrain: 0.95,         // fraction of the bottom's charge delivered to the ground in a strike
+  strikeDur: 1.0,            // seconds the strike lasts
+  resetDur: 2.2,             // seconds before the cycle starts over
+  stepDt: 0.15,              // seconds between steps of the growing path
+  minGap: 0.25,
+  polarizeAt: 0.3,           // fraction of the strike-point pull where ground effects become obvious
+  objHeight: { field: 0, tree: 0.20, rod: 0.30 }   // object height, in the same units as cloud height
+};
+const STAGES = [
+  { name: 'Ready', title: 'Set the starting conditions', text: 'Use the sliders, then press Run. Turn on "Pause at each stage" to stop and talk about every step.' },
+  { name: 'Warm air rises', title: 'Warm, moist air rises and the cloud grows', text: 'Rising air carries water up where it is cold. Some droplets freeze into ice crystals, and the cloud grows tall.' },
+  { name: 'Charge separates', title: 'Collisions separate charge inside the cloud', text: 'Rising ice crystals bump into heavier pellets that are falling. Each collision moves an electron from a crystal to a pellet. Pellets carry electrons toward the bottom, so the bottom becomes negative (−) and the top is left positive (+).' },
+  { name: 'Ground polarizes', title: 'The ground responds without touching the cloud', text: 'The negative bottom of the cloud pushes on the electrons in the ground\'s atoms. They shift away, so the top of each atom becomes partly + and the bottom partly −. No electrons enter or leave. The pull between cloud and ground gets stronger as more charge builds up.' },
+  { name: 'Air ionizes', title: 'The air gives way', text: 'Air is an insulator, so electrons cannot move through it easily. When the pull gets strong enough, it rips electrons off air molecules and makes ions. A path of ionized air steps down from the cloud while another reaches up from the ground.' },
+  { name: 'Strike', title: 'The paths connect and charge rushes through', text: 'Once the paths meet, electrons flow through the ionized air very fast. Energy leaves as light (the flash) and sound (thunder).' },
+  { name: 'Reset and repeat', title: 'Most of the extra electrons are now in the ground', text: 'The cloud\'s bottom has lost most of its extra electrons. Rising air and collisions are still at work, so charge starts building again.' }
+];
+
+/* =====================================================================
+   2. PHYSICS / MODEL  (no drawing, no page elements)
+   ===================================================================== */
+const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
+const hash  = (i, k = 0) => { const x = Math.sin(i * 127.1 + k * 311.7) * 43758.5453; return x - Math.floor(x); };
+
+const factorOf   = v => 0.3 + 0.7 * (v - 1) / 9;               // slider 1..10 -> 0.3..1.0
+const gapOfSlide = v => 0.6 + (v - 1) / 9;                      // slider 1..10 -> 0.6..1.6 (relative cloud height)
+const effectiveGap = (d, obj) => Math.max(MODEL.minGap, d - MODEL.objHeight[obj]);
+const pullOf = (charge, gap) => charge / (gap * gap);          // more charge: more pull; more distance: much less pull
+const collisionRate = (upF, iceF, growth) => MODEL.collisionsPerSec * upF * iceF * growth;
+const baseY = d => SCENE.GROUND_Y - d * SCENE.UNIT;             // height of the cloud's bottom on screen
+const objTopY = obj => SCENE.GROUND_Y - MODEL.objHeight[obj] * SCENE.UNIT;
+
+function newChannel() {
+  return { phase: 'idle', t: 0, acc: 0, branches: [], streamer: null, target: null, base: 0,
+           flash: 0, path: null, pathLen: 0, justConnected: false };
+}
+function newState() {
+  return { started: false, t: 0, anim: 0, growth: 0.12,
+           Qtop: 0, Qbot: 0, earth: 0, collisions: 0, eventAcc: 0, eventsPending: 0,
+           polar: 0, ion: 0, gap: 1, pull: 0, ready: 0,
+           strikes: 0, firstStrikeT: null, lastStrikeT: null, strikeTimes: [], strikeStartQ: 0, strikeX: null,
+           stage: 0, ch: newChannel() };
+}
+
+/* --- the growing path of ionized air (geometry only) --- */
+function beginIonize(ch, c) {
+  const tx = c.obj === 'field' ? 340 + Math.random() * 300 : SCENE.OBJ_X;
+  const sx = clamp(tx + (Math.random() - 0.5) * 220, SCENE.CLOUD_X0 + 80, SCENE.CLOUD_X1 - 80);
+  ch.phase = 'ionize'; ch.t = 0; ch.acc = 0; ch.flash = 0; ch.path = null; ch.justConnected = false;
+  ch.base = baseY(c.d);
+  ch.target = { x: tx, y: objTopY(c.obj) };
+  ch.branches = [{ pts: [{ x: sx, y: ch.base + 4 }], main: true, alive: true, drift: 0, steps: 0 }];
+  ch.streamer = null;
+}
+function growOneStep(ch) {
+  const tgt = ch.target;
+  const main = ch.branches[0];
+  for (const b of ch.branches.slice()) {
+    if (!b.alive) continue;
+    const tip = b.pts[b.pts.length - 1];
+    let ang;
+    if (b.main) {
+      if (ch.streamer) {
+        const st = ch.streamer.pts[ch.streamer.pts.length - 1];
+        ang = Math.atan2(st.y - tip.y, st.x - tip.x) * 0.75 + (Math.PI / 2) * 0.25 + (Math.random() - 0.5) * 0.5;
+      } else {
+        ang = Math.atan2(tgt.y - tip.y, tgt.x - tip.x) * 0.55 + (Math.PI / 2) * 0.45 + (Math.random() - 0.5) * 0.9;
+      }
+    } else {
+      ang = Math.PI / 2 + b.drift + (Math.random() - 0.5) * 1.0;
+    }
+    const L = b.main ? 12 : 10;
+    const nx = clamp(tip.x + Math.cos(ang) * L, 20, SCENE.W - 20);
+    const ny = Math.min(SCENE.GROUND_Y, tip.y + Math.max(2, Math.sin(ang) * L));
+    b.pts.push({ x: nx, y: ny }); b.steps++;
+    if (!b.main && (ny > SCENE.GROUND_Y - 6 || b.steps > 9 || Math.random() < 0.05)) b.alive = false;
+    if (b.main && ch.branches.length < 8 && ny > ch.base + 25 && Math.random() < 0.14) {
+      ch.branches.push({ pts: [{ x: nx, y: ny }], main: false, alive: true,
+                         drift: (Math.random() < 0.5 ? -1 : 1) * (0.5 + Math.random() * 0.5), steps: 0 });
+    }
+  }
+  const mt = main.pts[main.pts.length - 1];
+  if (!ch.streamer && mt.y > ch.base + 0.45 * (tgt.y - ch.base)) ch.streamer = { pts: [{ x: tgt.x, y: tgt.y }] };
+  if (ch.streamer) {
+    const st = ch.streamer.pts[ch.streamer.pts.length - 1];
+    const ang = Math.atan2(mt.y - st.y, mt.x - st.x) * 0.75 + (-Math.PI / 2) * 0.25 + (Math.random() - 0.5) * 0.5;
+    ch.streamer.pts.push({ x: clamp(st.x + Math.cos(ang) * 9, 20, SCENE.W - 20), y: Math.min(tgt.y, st.y + Math.sin(ang) * 9) });
+    const st2 = ch.streamer.pts[ch.streamer.pts.length - 1];
+    if (Math.hypot(st2.x - mt.x, st2.y - mt.y) < 24 || mt.y >= st2.y - 6) connect(ch);
+  } else if (mt.y >= tgt.y - 4) {
+    connect(ch);
+  }
+}
+function connect(ch) {
+  const main = ch.branches[0].pts;
+  const path = main.slice();
+  if (ch.streamer) for (let i = ch.streamer.pts.length - 1; i >= 0; i--) path.push(ch.streamer.pts[i]);
+  path.push({ x: ch.target.x, y: SCENE.GROUND_Y });
+  let len = 0;
+  for (let i = 1; i < path.length; i++) len += Math.hypot(path[i].x - path[i - 1].x, path[i].y - path[i - 1].y);
+  ch.path = path; ch.pathLen = len;
+  ch.phase = 'strike'; ch.t = 0; ch.flash = 1; ch.justConnected = true;
+}
+function stepChannel(ch, dt) {
+  if (ch.phase === 'ionize') {
+    ch.acc += dt;
+    while (ch.acc >= MODEL.stepDt && ch.phase === 'ionize') { ch.acc -= MODEL.stepDt; growOneStep(ch); }
+  } else if (ch.phase === 'strike') {
+    ch.t += dt;
+    const k = Math.max(0, 1 - ch.t / 1.5);
+    ch.flash = k * k;
+    if (ch.t >= MODEL.strikeDur) { ch.phase = 'reset'; ch.t = 0; }
+  } else if (ch.phase === 'reset') {
+    ch.t += dt; ch.flash = 0;
+    if (ch.t >= MODEL.resetDur) { ch.phase = 'idle'; ch.branches = []; ch.streamer = null; ch.path = null; }
+  }
+}
+
+/* --- which stage of the cycle are we in? --- */
+function stageOf(s) {
+  if (!s.started) return 0;
+  const p = s.ch.phase;
+  if (p === 'reset') return 6;
+  if (p === 'strike') return 5;
+  if (p === 'ionize') return 4;
+  if (s.ready >= MODEL.polarizeAt) return 3;
+  if (s.growth < 0.6 && s.strikes === 0) return 1;
+  return 2;
+}
+
+/* --- advance the whole model by dt seconds --- */
+function stepModel(s, dt, c) {
+  s.t += dt; s.anim += dt;
+  const upF = factorOf(c.up), iceF = factorOf(c.ice);
+  s.growth = Math.min(1, s.growth + MODEL.growthRate * upF * dt);
+
+  // collisions inside the cloud move electrons: top gets +, bottom gets -
+  const recovering = s.ch.phase === 'strike' || s.ch.phase === 'reset';   // charging pauses briefly after a flash
+  if (!recovering) s.eventAcc += collisionRate(upF, iceF, s.growth) * dt;
+  const n = Math.floor(s.eventAcc); s.eventAcc -= n;
+  const room = Math.max(0, MODEL.Qcap - s.Qbot);
+  const nEff = Math.min(n, Math.floor(room / MODEL.chargePerCollision + 1e-9));
+  if (nEff > 0) {
+    const dq = nEff * MODEL.chargePerCollision;
+    s.Qtop += dq; s.Qbot += dq; s.collisions += nEff; s.eventsPending += nEff;
+  }
+
+  // pull between cloud bottom and ground, compared with the point where air gives way
+  s.gap = effectiveGap(c.d, c.obj);
+  s.pull = pullOf(s.Qbot, s.gap);
+  s.ready = s.pull / MODEL.airThreshold;
+
+  if (s.ch.phase === 'idle' && s.ready >= 1) beginIonize(s.ch, c);
+  stepChannel(s.ch, dt);
+
+  if (s.ch.justConnected) {
+    s.ch.justConnected = false;
+    s.strikes++; s.strikeTimes.push(s.t); s.lastStrikeT = s.t;
+    if (s.firstStrikeT === null) s.firstStrikeT = s.t;
+    s.strikeStartQ = s.Qbot; s.strikeX = s.ch.target.x;
+  }
+  if (s.ch.phase === 'strike') {                       // electrons from the cloud's bottom go to the ground
+    const rate = s.strikeStartQ * MODEL.strikeDrain / MODEL.strikeDur;
+    const moved = Math.min(s.Qbot, rate * dt);
+    s.Qbot -= moved; s.earth += moved;
+  }
+
+  // smoothed values used for drawing the ground and the air
+  const polTarget = clamp(s.ready, 0, 1);
+  s.polar += (polTarget - s.polar) * Math.min(1, dt * 5);
+  const ph = s.ch.phase;
+  const ionTarget = ph === 'strike' ? 1 : ph === 'ionize' ? 0.85 : ph === 'reset' ? 0 : clamp((s.ready - 0.7) / 0.3, 0, 1) * 0.5;
+  s.ion += (ionTarget - s.ion) * Math.min(1, dt * 4);
+
+  s.stage = stageOf(s);
+}
+
+/* --- checks that run on the same functions the model uses --- */
+function totalCharge(s) { return s.Qtop - s.Qbot - s.earth; }
+function modelChecks(s) {
+  const r1 = pullOf(1, 1) / pullOf(1, 2);          // double the distance -> pull is 1/4
+  const r2 = pullOf(2, 1) / pullOf(1, 1);          // double the charge   -> pull is 2x
+  return [
+    { label: 'Double the distance: pull drops to ¼', value: (1 / r1).toFixed(2) + ' × as strong', ok: Math.abs(r1 - 4) < 1e-9 },
+    { label: 'Double the charge: pull doubles', value: r2.toFixed(2) + ' × as strong', ok: Math.abs(r2 - 2) < 1e-9 },
+    { label: 'Total charge stays zero', value: (Math.abs(totalCharge(s)) < 1e-9 ? 0 : totalCharge(s)).toFixed(3), ok: Math.abs(totalCharge(s)) < 1e-9 }
+  ];
+}
+console.assert(modelChecks(newState()).every(k => k.ok), 'Model self-check failed');
+
+/* =====================================================================
+   3. DRAWING HELPERS
+   ===================================================================== */
+const COL = { pos: '#e2483f', neg: '#3d7bf0', warm: '#ffb24d' };
+const FONT = '"Atkinson Hyperlegible", system-ui, sans-serif';
+
+function fitCanvas(cv, lw, lh) {
+  const r = cv.getBoundingClientRect();
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const w = Math.max(1, Math.round(r.width * dpr));
+  const h = Math.round(w * lh / lw);
+  if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+  const ctx = cv.getContext('2d');
+  ctx.setTransform(w / lw, 0, 0, h / lh, 0, 0);
+  return ctx;
+}
+function rr(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(x, y, w, h, r); else ctx.rect(x, y, w, h);
+}
+function chargeGlyph(ctx, x, y, r, sign, alpha = 1) {
+  ctx.save(); ctx.globalAlpha = alpha;
+  ctx.fillStyle = sign > 0 ? COL.pos : COL.neg;
+  ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill();
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = Math.max(1.2, r * 0.28); ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(x - r * 0.5, y); ctx.lineTo(x + r * 0.5, y);
+  if (sign > 0) { ctx.moveTo(x, y - r * 0.5); ctx.lineTo(x, y + r * 0.5); }
+  ctx.stroke(); ctx.restore();
+}
+let labelPx = 13, shortLabels = false, noLabels = false;      // set each frame from the on-screen width of the scene
+function pill(ctx, text, x, y, align = 'left') {
+  ctx.save();
+  ctx.font = '700 ' + labelPx + 'px ' + FONT; ctx.textBaseline = 'middle';
+  const h = Math.round(labelPx * 1.7), w = ctx.measureText(text).width + labelPx * 1.2;
+  const x0 = align === 'right' ? x - w : x;
+  ctx.fillStyle = 'rgba(6,12,28,0.78)'; rr(ctx, x0, y - h / 2, w, h, 6); ctx.fill();
+  ctx.fillStyle = '#eaf0ff'; ctx.fillText(text, x0 + labelPx * 0.6, y + 0.5);
+  ctx.restore();
+}
+function arrowHead(ctx, x, y, dir, size) {          // dir = -1 points up, +1 points down
+  ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - size, y - dir * size * 1.4); ctx.lineTo(x + size, y - dir * size * 1.4); ctx.closePath(); ctx.fill();
+}
+
+/* =====================================================================
+   4. MAIN SCENE DRAWING
+   ===================================================================== */
+const PUFFS = [[0.05,0.12,0.6],[0.15,0.25,0.8],[0.28,0.5,1.0],[0.42,0.75,1.1],[0.56,0.85,1.1],[0.7,0.65,1.0],[0.83,0.4,0.85],
+               [0.94,0.2,0.65],[0.35,0.15,0.8],[0.5,0.2,0.9],[0.65,0.18,0.85],[0.2,0.08,0.7],[0.8,0.1,0.7],[0.5,0.55,1.0]];
+const GLYPH_N = 90;
+const centerOut = n => Array.from({ length: n }, (_, i) => i).sort((a, b) => Math.abs(a - (n - 1) / 2) - Math.abs(b - (n - 1) / 2) || a - b);
+const GROUND_SLOTS = 24, GROUND_ORDER = centerOut(GROUND_SLOTS);   // slot numbers, middle of the cloud first
+const AIR_SLOTS = 9, AIR_ORDER = centerOut(AIR_SLOTS);
+
+function drawUpdraft(ctx, s, c, base) {
+  const upF = factorOf(c.up);
+  const { GROUND_Y } = SCENE;
+  ctx.save(); ctx.fillStyle = COL.warm; ctx.strokeStyle = COL.warm; ctx.lineWidth = 3; ctx.lineCap = 'round';
+  const top = base + 40, span = GROUND_Y - 14 - top, gapPx = 62;
+  for (const x of [868, 920]) {
+    for (let k = 0; k * gapPx < span + gapPx; k++) {
+      const off = (k * gapPx + s.anim * (30 + 60 * upF)) % (span + gapPx);
+      const y = GROUND_Y - 14 - off;
+      if (y < top) continue;
+      ctx.globalAlpha = (0.25 + 0.6 * upF) * clamp((y - top) / 40, 0, 1);
+      ctx.beginPath(); ctx.moveTo(x, y + 18); ctx.lineTo(x, y - 6); ctx.stroke();
+      arrowHead(ctx, x, y - 12, -1, 6);
+    }
+  }
+  ctx.restore();
+}
+function drawRain(ctx, s, base) {
+  if (s.growth < 0.5) return;
+  ctx.save(); ctx.strokeStyle = 'rgba(170,200,255,0.5)'; ctx.lineWidth = 1.3;
+  const a = clamp((s.growth - 0.5) / 0.5, 0, 1);
+  const span = SCENE.GROUND_Y - base - 16;
+  for (let i = 0; i < 46; i++) {
+    const x = SCENE.CLOUD_X0 + 30 + hash(i) * (SCENE.CLOUD_X1 - SCENE.CLOUD_X0 - 60);
+    const y = base + 10 + ((hash(i, 1) * span + s.anim * (220 + 80 * hash(i, 2))) % span);
+    ctx.globalAlpha = 0.45 * a;
+    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - 2.5, y + 11); ctx.stroke();
+  }
+  ctx.restore();
+}
+function drawCloud(ctx, s, base) {
+  const { CLOUD_X0: X0, CLOUD_X1: X1 } = SCENE;
+  const Hc = 22 + 120 * s.growth, topY = base - Hc, g = s.growth;
+  const grad = ctx.createLinearGradient(0, topY, 0, base);
+  grad.addColorStop(0, '#76889f'); grad.addColorStop(0.45, '#46557a'); grad.addColorStop(1, '#232b47');
+  ctx.save(); ctx.beginPath(); ctx.rect(0, 0, SCENE.W, base + 6); ctx.clip();
+  ctx.fillStyle = grad;
+  for (const [fx, fy, fr] of PUFFS) {
+    const cx = X0 + fx * (X1 - X0), cy = base - fy * (14 + 118 * g), r = fr * (34 + 80 * g);
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, TAU); ctx.fill();
+  }
+  ctx.restore();
+  return { topY, Hc };
+}
+function drawCloudCharges(ctx, s, base, topY, Hc) {
+  const { CLOUD_X0: X0, CLOUD_X1: X1 } = SCENE;
+  const nTop = Math.min(GLYPH_N, Math.round(s.Qtop * 30));
+  const nBot = Math.min(GLYPH_N, Math.round(s.Qbot * 30));
+  for (let i = 0; i < nTop; i++) {
+    const x = X0 + (0.3 + 0.42 * hash(i, 3)) * (X1 - X0);
+    const y = topY + 14 + hash(i, 4) * Math.max(8, Hc * 0.28) + Math.sin(s.anim * 1.5 + i) * 1.5;
+    chargeGlyph(ctx, x, y, 6, +1);
+  }
+  for (let i = 0; i < nBot; i++) {
+    const x = X0 + (0.1 + 0.8 * hash(i, 5)) * (X1 - X0);
+    const y = base - 8 - hash(i, 6) * 22 + Math.sin(s.anim * 1.5 + i) * 1.2;
+    chargeGlyph(ctx, x, y, 6, -1);
+  }
+}
+function drawGround(ctx, s) {
+  const { W, H, GROUND_Y, CLOUD_X0: X0, CLOUD_X1: X1 } = SCENE;
+  const g = ctx.createLinearGradient(0, GROUND_Y, 0, H);
+  g.addColorStop(0, '#3b3227'); g.addColorStop(1, '#241d16');
+  ctx.fillStyle = g; ctx.fillRect(0, GROUND_Y, W, H - GROUND_Y);
+  ctx.fillStyle = '#4d6b3a'; ctx.fillRect(0, GROUND_Y - 3, W, 5);
+
+  // induced charges appear under the middle of the cloud first, then spread outward
+  for (let r = 0; r < GROUND_SLOTS; r++) {
+    const a = clamp(s.polar * GROUND_SLOTS - r, 0, 1);
+    if (a <= 0) break;
+    const x = X0 + 20 + (GROUND_ORDER[r] + 0.5) * ((X1 - X0 - 40) / GROUND_SLOTS);
+    const al = a * (0.5 + 0.45 * s.polar);
+    chargeGlyph(ctx, x, GROUND_Y + 12, 5, +1, al);
+    chargeGlyph(ctx, x + 12, GROUND_Y + 48, 5, -1, al);
+  }
+  // electrons delivered by strikes spread out through the ground
+  const nE = Math.min(60, Math.round(s.earth * 30));
+  if (nE > 0 && s.strikeX !== null) {
+    const since = s.t - (s.lastStrikeT ?? s.t);
+    const spread = 30 + 420 * (1 - Math.exp(-since / 3));
+    for (let i = 0; i < nE; i++) {
+      const x = clamp(s.strikeX + (hash(i, 7) - 0.5) * 2 * spread, 14, SCENE.W - 14);
+      chargeGlyph(ctx, x, GROUND_Y + 28 + hash(i, 8) * 52, 5, -1, 0.9);
+    }
+  }
+}
+function drawAttraction(ctx, s, base) {
+  const a = clamp(s.polar, 0, 1);
+  if (a < 0.05) return;
+  const { CLOUD_X0: X0, CLOUD_X1: X1, GROUND_Y } = SCENE;
+  ctx.save(); ctx.strokeStyle = '#ffd37a'; ctx.fillStyle = '#ffd37a';
+  ctx.lineWidth = 1 + 2.5 * a; ctx.setLineDash([6, 8]); ctx.lineDashOffset = -s.anim * 20;
+  for (let i = 0; i < 7; i++) {
+    const x = X0 + 60 + i * ((X1 - X0 - 120) / 6);
+    ctx.globalAlpha = 0.12 + 0.5 * a;
+    ctx.beginPath(); ctx.moveTo(x, base + 10 + 40 * a); ctx.lineTo(x, GROUND_Y - 46 * a - 8); ctx.stroke();
+    ctx.setLineDash([]);
+    arrowHead(ctx, x, base + 12 + 42 * a, -1, 3 + 3 * a);   // ground pulls up toward the cloud...
+    arrowHead(ctx, x, GROUND_Y - 6 - 46 * a, +1, 3 + 3 * a);
+    ctx.setLineDash([6, 8]);
+  }
+  ctx.restore();
+}
+function drawObject(ctx, obj, s) {
+  const { GROUND_Y, UNIT, OBJ_X } = SCENE;
+  const inStrike = s.ch.phase === 'strike' && s.ch.target && s.ch.target.x === OBJ_X;
+  if (obj === 'field') {
+    ctx.strokeStyle = '#5f8247'; ctx.lineWidth = 2; ctx.lineCap = 'round';
+    for (let i = 0; i < 40; i++) {
+      const x = 20 + hash(i, 9) * (SCENE.W - 40);
+      ctx.beginPath(); ctx.moveTo(x, GROUND_Y - 2); ctx.lineTo(x - 3, GROUND_Y - 9); ctx.moveTo(x, GROUND_Y - 2); ctx.lineTo(x + 3, GROUND_Y - 8); ctx.stroke();
+    }
+  } else if (obj === 'tree') {
+    const h = MODEL.objHeight.tree * UNIT;
+    ctx.fillStyle = '#5a3f27'; ctx.fillRect(OBJ_X - 5, GROUND_Y - h * 0.55, 10, h * 0.55);
+    ctx.fillStyle = '#2f6b3a'; ctx.beginPath(); ctx.arc(OBJ_X, GROUND_Y - h * 0.72, h * 0.34, 0, TAU); ctx.fill();
+    ctx.beginPath(); ctx.arc(OBJ_X - 12, GROUND_Y - h * 0.55, h * 0.24, 0, TAU); ctx.fill();
+    ctx.beginPath(); ctx.arc(OBJ_X + 12, GROUND_Y - h * 0.55, h * 0.24, 0, TAU); ctx.fill();
+  } else {
+    const hb = 0.22 * UNIT, ht = MODEL.objHeight.rod * UNIT;
+    ctx.fillStyle = '#8c93a3'; ctx.fillRect(OBJ_X - 40, GROUND_Y - hb, 80, hb);
+    ctx.fillStyle = '#5b6275'; ctx.fillRect(OBJ_X - 46, GROUND_Y - hb - 6, 92, 6);
+    ctx.fillStyle = '#2a3042'; ctx.fillRect(OBJ_X - 8, GROUND_Y - 26, 16, 26);
+    ctx.fillStyle = '#c9d8f0'; ctx.fillRect(OBJ_X - 30, GROUND_Y - hb + 10, 12, 12); ctx.fillRect(OBJ_X + 18, GROUND_Y - hb + 10, 12, 12);
+    ctx.strokeStyle = inStrike ? '#fff6c8' : '#d6dbe6'; ctx.lineWidth = inStrike ? 4 : 2.5; ctx.lineCap = 'round';
+    if (inStrike) { ctx.shadowColor = '#ffe27a'; ctx.shadowBlur = 14; }
+    ctx.beginPath(); ctx.moveTo(OBJ_X, GROUND_Y - ht); ctx.lineTo(OBJ_X, GROUND_Y - hb - 6);          // the rod
+    ctx.moveTo(OBJ_X + 44, GROUND_Y - hb - 6); ctx.lineTo(OBJ_X + 44, GROUND_Y);                        // metal wire to the ground
+    ctx.moveTo(OBJ_X, GROUND_Y - hb - 6); ctx.lineTo(OBJ_X + 44, GROUND_Y - hb - 6);
+    ctx.stroke(); ctx.shadowBlur = 0;
+  }
+}
+function polyline(ctx, pts) {
+  ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y);
+  for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+  ctx.stroke();
+}
+function drawChannel(ctx, s) {
+  const ch = s.ch;
+  if (ch.phase === 'idle') return;
+  ctx.save(); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  const hot = ch.phase === 'strike' || ch.phase === 'reset';
+  const fade = ch.phase === 'reset' ? clamp(1 - ch.t / MODEL.resetDur, 0, 1) : 1;
+  ctx.globalAlpha = fade;
+  for (const b of ch.branches) {
+    if (b.pts.length < 2) continue;
+    if (hot) { ctx.strokeStyle = '#fffbe6'; ctx.shadowColor = '#ffe27a'; ctx.shadowBlur = 16; ctx.lineWidth = b.main ? 3.5 : 2; }
+    else { ctx.strokeStyle = 'rgba(176,196,255,0.9)'; ctx.shadowColor = '#8fa6ff'; ctx.shadowBlur = 8; ctx.lineWidth = b.main ? 2.2 : 1.4; }
+    polyline(ctx, b.pts);
+  }
+  if (ch.streamer && ch.streamer.pts.length > 1) {
+    ctx.strokeStyle = hot ? '#fffbe6' : 'rgba(150,232,255,0.95)'; ctx.shadowColor = hot ? '#ffe27a' : '#7fe0ff';
+    ctx.shadowBlur = hot ? 16 : 8; ctx.lineWidth = hot ? 3 : 1.8;
+    polyline(ctx, ch.streamer.pts);
+  }
+  if (ch.phase === 'strike' && ch.path) {                      // the complete path, bright
+    ctx.strokeStyle = '#ffffff'; ctx.shadowColor = '#ffe27a'; ctx.shadowBlur = 22; ctx.lineWidth = 5;
+    polyline(ctx, ch.path);
+    ctx.shadowBlur = 0;
+    // electrons rushing down the path
+    const pts = ch.path, len = ch.pathLen;
+    for (let i = 0; i < 26; i++) {
+      let d = (((i / 26) + ch.t * 1.6) % 1) * len;
+      for (let j = 1; j < pts.length; j++) {
+        const seg = Math.hypot(pts[j].x - pts[j - 1].x, pts[j].y - pts[j - 1].y);
+        if (d <= seg) {
+          const f = seg ? d / seg : 0;
+          chargeGlyph(ctx, pts[j - 1].x + (pts[j].x - pts[j - 1].x) * f, pts[j - 1].y + (pts[j].y - pts[j - 1].y) * f, 5, -1);
+          break;
+        }
+        d -= seg;
+      }
+    }
+  }
+  ctx.restore();
+  // sound waves (thunder)
+  if ((ch.phase === 'strike' || ch.phase === 'reset') && ch.target) {
+    const t = ch.phase === 'strike' ? ch.t : MODEL.strikeDur + ch.t;
+    ctx.save(); ctx.lineWidth = 3;
+    for (let k = 0; k < 3; k++) {
+      const tt = t - k * 0.35;
+      if (tt <= 0) continue;
+      const r = tt * 190, a = clamp(1 - tt / 2.6, 0, 1) * 0.55;
+      ctx.strokeStyle = `rgba(255,255,255,${a})`;
+      ctx.beginPath(); ctx.arc(ch.target.x, SCENE.GROUND_Y - 4, r, Math.PI, TAU); ctx.stroke();
+    }
+    ctx.restore();
+  }
+}
+function drawLabels(ctx, s, c, base, topY) {
+  if (noLabels) return;
+  const { GROUND_Y, W } = SCENE;
+  const ch = s.ch, hot = ch.phase === 'ionize' || ch.phase === 'strike';
+  const sp = Math.round(labelPx * 1.6);
+  if (shortLabels) {
+    pill(ctx, 'Cloud top +', 8, Math.min(topY + 20, base - 2 * sp));
+    pill(ctx, 'Cloud bottom −', 8, base - sp * 0.6);
+    pill(ctx, hot ? 'Ionized air' : 'Air', 8, (base + GROUND_Y) / 2);
+    pill(ctx, 'Ground', 8, GROUND_Y + sp);
+    if ((ch.phase === 'strike' || ch.phase === 'reset') && ch.t < 2.2) pill(ctx, 'Thunder', W - 8, base + 2 * sp, 'right');
+    return;
+  }
+  pill(ctx, 'Top of cloud: more +', 14, Math.min(topY + 20, base - 44));
+  pill(ctx, 'Bottom of cloud: more −', 14, base - 14);
+  pill(ctx, hot ? 'Ionized air: ions + free electrons' : 'Air: an insulator', 14, (base + GROUND_Y) / 2);
+  pill(ctx, s.polar > 0.3 ? 'Ground: surface now partly +' : 'Ground: neutral', 14, GROUND_Y + 22);
+  pill(ctx, 'Warm, moist air rises', W - 14, base + 24, 'right');
+  if ((ch.phase === 'strike' || ch.phase === 'reset') && ch.t < 2.2) pill(ctx, 'Thunder: sound waves', W - 14, base + 54, 'right');
+  if (s.earth > 0.05) pill(ctx, 'Extra electrons spread through the ground', W - 14, GROUND_Y + 22, 'right');
+}
+function drawScene(ctx, s, c, soften, cssW) {
+  const { W, H, GROUND_Y } = SCENE;
+  noLabels = cssW < 300; shortLabels = cssW < 640;
+  labelPx = shortLabels ? clamp(11.5 * W / cssW, 14, 26) : 13 * Math.max(1, W / cssW * 0.8);
+  const base = baseY(c.d);
+  const sky = ctx.createLinearGradient(0, 0, 0, GROUND_Y);
+  sky.addColorStop(0, '#0a1124'); sky.addColorStop(1, '#1d2a4a');
+  ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
+  for (let i = 0; i < 45; i++) {
+    ctx.fillStyle = `rgba(255,255,255,${0.5 * (1 - s.growth * 0.9) * hash(i, 2)})`;
+    ctx.fillRect(hash(i) * W, hash(i, 1) * GROUND_Y * 0.55, 1.6, 1.6);
+  }
+  drawUpdraft(ctx, s, c, base);
+  drawRain(ctx, s, base);
+  drawGround(ctx, s);
+  drawObject(ctx, c.obj, s);
+  const { topY, Hc } = drawCloud(ctx, s, base);
+  drawCloudCharges(ctx, s, base, topY, Hc);
+  drawAttraction(ctx, s, base);
+  drawChannel(ctx, s);
+  drawLabels(ctx, s, c, base, topY);
+  if (s.ch.flash > 0.01) {
+    ctx.fillStyle = `rgba(255,252,235,${s.ch.flash * (soften ? 0.1 : 0.34)})`;
+    ctx.fillRect(0, 0, W, H);
+  }
+}
+
+/* =====================================================================
+   5. ZOOM WINDOWS
+   ===================================================================== */
+const zc = { crystals: [], pellets: [], events: [] };
+for (let i = 0; i < 16; i++) zc.crystals.push({ x: hash(i, 11) * ZOOM.W, y: hash(i, 12) * ZOOM.H, ph: hash(i, 13) * TAU, sp: 0.6 + hash(i, 14) * 0.8 });
+for (let i = 0; i < 10; i++) zc.pellets.push({ x: hash(i, 15) * ZOOM.W, y: hash(i, 16) * ZOOM.H, ph: hash(i, 17) * TAU, sp: 0.6 + hash(i, 18) * 0.8 });
+
+function drawCrystal(ctx, x, y, r) {
+  ctx.beginPath();
+  for (let k = 0; k < 3; k++) { const a = k * Math.PI / 3; ctx.moveTo(x - Math.cos(a) * r, y - Math.sin(a) * r); ctx.lineTo(x + Math.cos(a) * r, y + Math.sin(a) * r); }
+  ctx.stroke();
+}
+function tag(ctx, text, x, y, fs, align = 'left') {      // small label with a dark backing, sized in canvas units
+  ctx.save(); ctx.font = '700 ' + fs + 'px ' + FONT; ctx.textBaseline = 'middle';
+  const w = ctx.measureText(text).width + fs, h = fs * 1.7;
+  const x0 = align === 'right' ? x - w : align === 'center' ? x - w / 2 : x;
+  ctx.fillStyle = 'rgba(6,12,28,0.78)'; rr(ctx, x0, y - h / 2, w, h, fs * 0.4); ctx.fill();
+  ctx.fillStyle = '#eaf0ff'; ctx.fillText(text, x0 + fs * 0.5, y + fs * 0.05); ctx.restore();
+}
+function drawZoomCloud(ctx, s, c, dt, ui) {
+  const { W, H } = ZOOM, upF = factorOf(c.up), iceF = factorOf(c.ice);
+  ctx.fillStyle = '#141c33'; ctx.fillRect(0, 0, W, H);
+  const nC = Math.round(6 + 10 * iceF), nP = Math.round(4 + 6 * iceF);
+  ctx.strokeStyle = '#bfe6ff'; ctx.lineWidth = 1.6; ctx.lineCap = 'round';
+  for (let i = 0; i < nC; i++) {
+    const p = zc.crystals[i];
+    p.y -= (14 + 34 * upF) * p.sp * dt; if (p.y < -8) p.y = H + 8;
+    drawCrystal(ctx, p.x + Math.sin(s.anim * 1.2 + p.ph) * 6, p.y, 5.5);
+  }
+  for (let i = 0; i < nP; i++) {
+    const p = zc.pellets[i];
+    p.y += (12 + 22 * upF) * p.sp * dt; if (p.y > H + 8) p.y = -8;
+    ctx.fillStyle = '#e9edf7'; ctx.beginPath(); ctx.arc(p.x + Math.sin(s.anim * 1 + p.ph) * 5, p.y, 5.5, 0, TAU); ctx.fill();
+  }
+  // a few collisions are shown in detail
+  while (s.eventsPending > 0) {
+    s.eventsPending--;
+    if (Math.random() < 0.14 && zc.events.length < 6) zc.events.push({ x: 40 + Math.random() * (W - 80), y: 40 + Math.random() * (H - 80), t: 0 });
+  }
+  for (const e of zc.events) {
+    e.t += dt;
+    const tn = e.t / 1.5;
+    const yc = e.y + 20 - 40 * tn, yp = e.y - 20 + 40 * tn;
+    ctx.save();
+    if (tn > 0.38 && tn < 0.62) { ctx.fillStyle = 'rgba(255,230,140,0.9)'; ctx.beginPath(); ctx.arc(e.x, e.y, 9 + 6 * Math.sin((tn - 0.38) / 0.24 * Math.PI), 0, TAU); ctx.fill(); }
+    ctx.strokeStyle = '#d8f1ff'; ctx.lineWidth = 2; drawCrystal(ctx, e.x - 14, yc, 7);
+    ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(e.x + 14, yp, 7, 0, TAU); ctx.fill();
+    const ef = clamp((tn - 0.38) / 0.24, 0, 1);                    // the electron hops from crystal to pellet
+    const ex = (e.x - 14) + 28 * ef, ey = yc + (yp - yc) * ef;
+    ctx.fillStyle = COL.neg; ctx.beginPath(); ctx.arc(ex, ey - 1, 3.2, 0, TAU); ctx.fill();
+    if (tn > 0.62) { chargeGlyph(ctx, e.x - 14, yc - 14, 5, +1); chargeGlyph(ctx, e.x + 14, yp + 15, 5, -1); }
+    ctx.restore();
+  }
+  zc.events = zc.events.filter(e => e.t < 1.5);
+  tag(ctx, 'ice crystals rise ↑', 6, ui.fs * 1.1, ui.fs);
+  tag(ctx, 'heavier pellets fall ↓', 6, H - ui.fs * 1.1, ui.fs);
+}
+const airRank = Array.from({ length: 24 }, (_, i) => hash(i, 20));
+function drawZoomAir(ctx, s, ui) {
+  const { W, H } = ZOOM;
+  ctx.fillStyle = '#141c33'; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = 'rgba(61,123,240,0.28)'; ctx.fillRect(0, 0, W, 22);
+  for (let i = 0; i < AIR_SLOTS; i++) chargeGlyph(ctx, 20 + i * 35, 11, 6, -1);
+  ctx.fillStyle = 'rgba(226,72,63,0.14)'; ctx.fillRect(0, H - 22, W, 22);
+  for (let r = 0; r < AIR_SLOTS; r++) {                              // the ground's + charges show up from the middle outward
+    const a = clamp(s.polar * AIR_SLOTS - r, 0, 1);
+    if (a <= 0) break;
+    chargeGlyph(ctx, 20 + AIR_ORDER[r] * 35, H - 11, 6, +1, 0.6 * a);
+  }
+  const strike = s.ch.phase === 'strike';
+  for (let i = 0; i < 24; i++) {
+    const col = i % 6, row = Math.floor(i / 6);
+    const x = 32 + col * 51, y = 52 + row * 36;
+    const ionized = airRank[i] < s.ion;
+    ctx.fillStyle = ionized ? 'rgba(226,72,63,0.38)' : 'rgba(150,165,195,0.45)';
+    ctx.strokeStyle = ionized ? COL.pos : '#98a8c8'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(x, y, 11, 0, TAU); ctx.fill(); ctx.stroke();
+    let ex = x + 8, ey = y - 8;
+    if (ionized) {
+      const speed = strike ? 160 : 36;
+      const off = (s.anim * speed + i * 17) % 60;
+      ex = x + 4 + Math.sin(i) * 3; ey = y + 14 + off * 0.6;
+      if (ey > H - 24) ey = y + 14;
+      chargeGlyph(ctx, x, y, 6, +1);
+    }
+    ctx.fillStyle = COL.neg; ctx.beginPath(); ctx.arc(ex, ey, 3.4, 0, TAU); ctx.fill();
+  }
+  if (ui.big) {
+    tag(ctx, 'bottom of the cloud (−)', 8, 31, ui.fs);
+  }
+}
+function drawZoomGround(ctx, s, ui) {
+  const { W, H } = ZOOM;
+  ctx.fillStyle = '#141c33'; ctx.fillRect(0, 0, W, 54);
+  ctx.fillStyle = '#2a2219'; ctx.fillRect(0, 54, W, H - 54);
+  ctx.fillStyle = 'rgba(61,123,240,0.28)'; ctx.fillRect(0, 0, W, 20);
+  for (let i = 0; i < 9; i++) chargeGlyph(ctx, 20 + i * 35, 10, 6, -1);
+  const shift = 9 * s.polar;
+  for (let row = 0; row < 2; row++) {
+    for (let col = 0; col < 6; col++) {
+      const x = 33 + col * 51, y = 98 + row * 52;
+      ctx.fillStyle = 'rgba(80,140,255,0.32)'; ctx.strokeStyle = COL.neg; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(x, y + shift, 19, 0, TAU); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = COL.pos; ctx.beginPath(); ctx.arc(x, y, 5.5, 0, TAU); ctx.fill();
+      if (s.polar > 0.2 && row === 0 && col % 2 === 0) {
+        ctx.font = '700 ' + Math.min(12, ui.fs * 0.9) + 'px ' + FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#ffb4ad'; ctx.fillText('+ top', x, y - 25);
+        ctx.fillStyle = '#9ec2ff'; ctx.fillText('− bottom', x, y + 25 + shift * 0.4);
+        ctx.textAlign = 'left';
+      }
+    }
+  }
+  tag(ctx, 'bottom of the cloud (−)', 6, 34, ui.fs);
+  tag(ctx, ui.big ? 'atoms in the ground' : 'atoms (blue = electrons)', 6, H - ui.fs * 1.1, ui.fs);
+}
+
+/* =====================================================================
+   6. PAGE (controls, readouts, loop) -- reads state, never changes the physics
+   ===================================================================== */
+const $ = id => document.getElementById(id);
+const VIEWS = {
+  scene:  { title: 'The storm',        lw: SCENE.W, lh: SCENE.H },
+  cloud:  { title: 'Inside the cloud', lw: ZOOM.W,  lh: ZOOM.H },
+  air:    { title: 'In the air',       lw: ZOOM.W,  lh: ZOOM.H },
+  ground: { title: 'In the ground',    lw: ZOOM.W,  lh: ZOOM.H }
+};
+const VIEW_ORDER = ['scene', 'cloud', 'air', 'ground'];
+const ALT = {
+  scene:  'Animated storm scene: a cloud above the ground. Charges build up in the cloud, the ground polarizes, a path of ionized air forms, and lightning strikes.',
+  cloud:  'Inside the cloud: ice crystals rise and heavier pellets fall. When they collide, an electron moves from the crystal to the pellet.',
+  air:    'In the air: molecules between the cloud and the ground. At first they hold their electrons. When the pull is strong enough, electrons are pulled off and ions form.',
+  ground: 'In the ground: atoms whose electrons shift away from the negative bottom of the cloud, so each atom becomes partly positive on top and partly negative underneath.'
+};
+const LEGEND = {
+  cloud:  'Snowflake = ice crystal. White ball = heavier pellet. Small blue dot = electron. Yellow flash = a collision. Only a few collisions are shown, but the counter counts all of them.',
+  air:    'Gray circle = air molecule. Red circle with + = ion. Small blue dot = electron. Blue strip on top = the negative bottom of the cloud. Red strip on the bottom = the ground.',
+  ground: 'Red dot = the center of an atom (+). Blue circle = the atom\'s electrons. Watch the blue circle slide away from the cloud as the pull grows. Nothing leaves the atom.'
+};
+const cvMain = $('mainCv');
+const thumbs = [0, 1, 2].map(i => ({ box: $('th' + i), cv: $('thCv' + i), title: $('thTitle' + i), cap: $('thCap' + i), count: $('thCount' + i), btn: $('thBtn' + i), view: null }));
+let mainView = 'scene';
+let state = newState();
+let running = false, speed = 1, lastTs = null, lastStage = -1, pausedAtStage = false;
+
+const word = (v, lo, mid, hi) => v <= 3 ? lo : v <= 7 ? mid : hi;
+function getConditions() {
+  const up = +$('up').value, ice = +$('ice').value, h = +$('height').value;
+  const obj = document.querySelector('input[name="obj"]:checked').value;
+  return { up, ice, d: gapOfSlide(h), obj, hSlide: h };
+}
+function buildStageStrip() {
+  const ol = $('stages');
+  for (let i = 1; i <= 6; i++) {
+    const li = document.createElement('li');
+    li.className = 'stage'; li.dataset.i = i;
+    li.innerHTML = '<span class="n">' + i + '</span><span>' + STAGES[i].name + '</span>';
+    ol.appendChild(li);
+  }
+}
+function updateStrip(stage) {
+  document.querySelectorAll('.stage').forEach(li => {
+    const i = +li.dataset.i;
+    li.classList.toggle('active', i === stage);
+    li.classList.toggle('done', stage !== 0 && i < stage);
+    if (i === stage) li.setAttribute('aria-current', 'step'); else li.removeAttribute('aria-current');
+  });
+}
+function extraLine(s, c) {
+  switch (s.stage) {
+    case 1: return 'Cloud size: ' + Math.round(s.growth * 100) + '% grown';
+    case 2: return 'Collisions so far: ' + s.collisions + '. Each one moved one electron.';
+    case 3: return 'The pull is ' + Math.round(clamp(s.ready, 0, 1) * 100) + '% of what the air can hold off.' +
+                   (c.obj === 'rod' ? ' The tall metal rod shortens the gap to the cloud.' : c.obj === 'tree' ? ' The tall tree shortens the gap to the cloud.' : '');
+    case 4: return c.obj === 'field' ? 'In an open field, the path from the ground rises from wherever it happens to connect.' :
+                   'The path from the ground rises from the tallest object, because it is closest to the cloud.';
+    case 5: return c.obj === 'rod' ? 'Metal has free electrons, so the rod and its wire carry the charge into the ground.' : 'Electrons are leaving the cloud\'s bottom and entering the ground.';
+    case 6: return 'Strikes so far: ' + s.strikes + '.';
+    default: return '';
+  }
+}
+function updateCaption(s, c) {
+  const st = STAGES[s.stage];
+  $('capTag').textContent = s.stage === 0 ? 'Ready' : 'Stage ' + s.stage + ' of 6';
+  if ($('capTitle').textContent !== st.title) { $('capTitle').textContent = st.title; $('capText').textContent = st.text; }
+  $('capExtra').textContent = extraLine(s, c);
+  $('pauseNote').hidden = !pausedAtStage;
+  if (pausedAtStage) $('pauseNote').textContent = 'Paused at this stage. Press Continue when you are ready.';
+}
+
+/* text for each view (used by the big view and the small ones) */
+function viewInfo(v, s) {
+  const ph = s.ch.phase;
+  switch (v) {
+    case 'scene':
+      return { cap: s.stage === 0 ? 'Press Run to start the storm.' : 'Stage ' + s.stage + ': ' + STAGES[s.stage].name, count: 'Strikes so far: ' + s.strikes, active: false };
+    case 'cloud':
+      return { cap: 'Rising ice crystals hit falling pellets. Each collision moves an electron to the pellet, which carries it toward the bottom of the cloud.',
+               count: 'Electrons moved: ' + s.collisions, active: s.stage === 1 || s.stage === 2 };
+    case 'air':
+      return { cap: ph === 'strike' ? 'Free electrons rush through the ionized air. Energy leaves as light and sound.' :
+                    ph === 'ionize' ? 'The pull is strong enough to rip electrons off air molecules. Each one leaves behind an ion (+).' :
+                    s.ion > 0.05 ? 'The pull is getting strong. A few electrons are starting to come loose.' :
+                    'Air molecules hold on to their electrons. Nothing can flow, so air is an insulator.',
+               count: 'Molecules turned into ions: ' + Math.round(s.ion * 24) + ' of 24', active: s.stage === 4 || s.stage === 5 };
+    default:
+      return { cap: s.polar < 0.08 ? 'Atoms are neutral. Their electrons are spread evenly around the center.' :
+                    'Electrons shift away from the cloud\'s negative bottom. Each atom is partly + on top and partly − underneath. No electrons enter or leave.',
+               count: 'Electron shift: ' + Math.round(s.polar * 100) + '%', active: s.stage === 3 };
+  }
+}
+function updateViewText(s) {
+  const mi = viewInfo(mainView, s);
+  const zoomed = mainView !== 'scene';
+  $('viewCap').hidden = !zoomed;
+  if (zoomed) {
+    $('vcTag').textContent = mi.active ? 'Zoomed in · happening now' : 'Zoomed in';
+    $('vcTitle').textContent = VIEWS[mainView].title;
+    $('vcText').textContent = mi.cap; $('vcCount').textContent = mi.count; $('vcLegend').textContent = LEGEND[mainView];
+  }
+  for (const t of thumbs) {
+    const i = viewInfo(t.view, s);
+    t.cap.textContent = i.cap; t.count.textContent = i.count;
+    t.box.classList.toggle('active', i.active);
+  }
+}
+function assignThumbs() {
+  const others = VIEW_ORDER.filter(v => v !== mainView);
+  thumbs.forEach((t, i) => {
+    t.view = others[i];
+    t.title.textContent = VIEWS[t.view].title;
+    t.btn.setAttribute('aria-label', 'Make "' + VIEWS[t.view].title + '" the big view');
+    t.cv.setAttribute('aria-label', ALT[t.view]);
+  });
+  cvMain.setAttribute('aria-label', ALT[mainView]);
+}
+function setMainView(v, fromThumb) {
+  mainView = v;
+  const r = document.querySelector('input[name="view"][value="' + v + '"]'); if (r) r.checked = true;
+  assignThumbs();
+  if (fromThumb) {
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    $('viewSeg').closest('fieldset').scrollIntoView({ block: 'start', behavior: reduce ? 'auto' : 'smooth' });
+    if (r) r.focus({ preventScroll: true });
+  }
+}
+
+const f1 = x => x.toFixed(1), f2 = x => x.toFixed(2);
+function updateReadouts(s, c) {
+  $('mCharge').textContent = f2(s.Qbot) + ' units';
+  $('bCharge').style.width = clamp(s.Qbot / 3, 0, 1) * 100 + '%';
+  $('mPull').textContent = f2(s.pull) + ' (air gives way at ' + f2(MODEL.airThreshold) + ')';
+  const maxPull = MODEL.airThreshold * 1.5;
+  $('bPull').style.width = clamp(s.pull / maxPull, 0, 1) * 100 + '%';
+  $('markT').style.left = (MODEL.airThreshold / maxPull * 100) + '%';
+  $('sStrikes').textContent = s.strikes;
+  $('sTime').textContent = f1(s.t) + ' s';
+  $('sFirst').textContent = s.firstStrikeT === null ? '–' : f1(s.firstStrikeT) + ' s';
+  $('sSince').textContent = s.lastStrikeT === null ? '–' : f1(s.t - s.lastStrikeT) + ' s';
+  $('sAvg').textContent = s.strikeTimes.length < 2 ? '–' :
+    f1((s.strikeTimes[s.strikeTimes.length - 1] - s.strikeTimes[0]) / (s.strikeTimes.length - 1)) + ' s';
+  $('ledger').innerHTML =
+    '<div>Top of cloud (+)</div><div>+' + f2(s.Qtop) + '</div>' +
+    '<div>Bottom of cloud (−)</div><div>−' + f2(s.Qbot) + '</div>' +
+    '<div>Extra electrons in ground (−)</div><div>−' + f2(s.earth) + '</div>' +
+    '<div class="total">Total charge</div><div class="total">' + (Math.abs(totalCharge(s)) < 1e-9 ? '0.00' : f2(totalCharge(s))) + '</div>';
+  $('checks').innerHTML = modelChecks(s).map(k =>
+    '<div><span>' + k.label + ' <span class="muted mono">(' + k.value + ')</span></span><span class="badge ' + (k.ok ? 'ok' : 'fail') + '">' + (k.ok ? 'PASS' : 'FAIL') + '</span></div>').join('');
+  $('upOut').textContent = word(+$('up').value, 'weak', 'medium', 'strong');
+  $('iceOut').textContent = word(+$('ice').value, 'few', 'some', 'lots');
+  $('heightOut').textContent = word(+$('height').value, 'low', 'medium', 'high');
+}
+function updateButtons() {
+  const b = $('runBtn');
+  b.textContent = running ? 'Pause' : (state.started ? 'Continue' : 'Run');
+}
+function setRunning(v) { running = v; if (v) pausedAtStage = false; updateButtons(); }
+
+$('runBtn').addEventListener('click', () => {
+  if (!running && !state.started) { state.started = true; state.stage = 1; lastStage = 1; }
+  setRunning(!running);
+});
+$('resetBtn').addEventListener('click', () => {
+  state = newState(); zc.events = []; lastStage = -1; pausedAtStage = false; setRunning(false);
+  $('capTitle').textContent = ''; // force caption refresh
+});
+document.querySelectorAll('input[name="speed"]').forEach(r => r.addEventListener('change', () => { speed = +document.querySelector('input[name="speed"]:checked').value; }));
+document.querySelectorAll('input[name="view"]').forEach(r => r.addEventListener('change', () => setMainView(r.value, false)));
+thumbs.forEach(t => t.btn.addEventListener('click', () => setMainView(t.view, true)));
+
+function drawView(view, cv, s, c, dt, big, soften) {
+  const V = VIEWS[view];
+  const ctx = fitCanvas(cv, V.lw, V.lh);
+  const cssW = cv.getBoundingClientRect().width || V.lw;
+  if (view === 'scene') { drawScene(ctx, s, c, soften, cssW); return; }
+  const ui = { big, fs: (big ? 14 : 9) * V.lw / cssW };      // label size ends up about 14px (big) or 9px (small) on screen
+  if (view === 'cloud') drawZoomCloud(ctx, s, c, dt, ui);
+  else if (view === 'air') drawZoomAir(ctx, s, ui);
+  else drawZoomGround(ctx, s, ui);
+}
+function frame(ts) {
+  const real = lastTs === null ? 0 : Math.min(0.05, (ts - lastTs) / 1000);
+  lastTs = ts;
+  const c = getConditions();
+  const dt = running ? real * speed : 0;
+  if (dt > 0) {
+    // small sub-steps keep fast mode smooth and the stepped path in time
+    const n = Math.max(1, Math.ceil(dt / 0.02));
+    for (let i = 0; i < n; i++) stepModel(state, dt / n, c);
+    if ($('autoPause').checked && state.stage !== lastStage && state.stage !== 0) { setRunning(false); pausedAtStage = true; updateButtons(); }
+    lastStage = state.stage;
+  } else if (!state.started) {
+    state.stage = 0;
+    const gap = effectiveGap(c.d, c.obj); state.gap = gap; state.pull = pullOf(state.Qbot, gap); state.ready = state.pull / MODEL.airThreshold;
+  }
+  const soften = $('soften').checked;
+  drawView(mainView, cvMain, state, c, dt, true, soften);
+  for (const t of thumbs) drawView(t.view, t.cv, state, c, dt, false, soften);
+  $('stageNow').textContent = state.stage === 0 ? 'Ready' : 'Stage ' + state.stage + ': ' + STAGES[state.stage].name;
+  updateStrip(state.stage); updateCaption(state, c); updateViewText(state); updateReadouts(state, c);
+  requestAnimationFrame(frame);
+}
+buildStageStrip();
+assignThumbs();
+if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) $('soften').checked = true;
+updateButtons();
+requestAnimationFrame(frame);
+</script>
+
+</body>
+</html>
