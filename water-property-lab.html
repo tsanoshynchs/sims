@@ -1,0 +1,925 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Water Property Lab</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Source+Sans+3:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: lab-bench workspace — header, station tabs, then each station as scene (left) + procedure/controls (right), data table and particle view below. */
+:root{
+  --bg:#eef2f2; --surface:#ffffff; --surface-2:#f6f8f8; --ink:#17262b; --muted:#56666b; --line:#d3dcdd;
+  --accent:#16687f; --accent-ink:#ffffff; --accent-soft:#dcedf1;
+  --ok:#25784a; --ok-soft:#e1f2e8; --warn:#9a5b00; --warn-soft:#fbefd9; --bad:#b3261e;
+  --scene:#e7ecec; --towel:#f7f7f2; --towel-line:#e2e3da; --towel-wet:#d7dcd4;
+  --bench:#c9cfcc; --bench-edge:#b3bab6; --glass:rgba(180,205,212,.22); --glass-edge:#7f9aa1;
+  --ruler:rgba(255,250,220,.62); --ruler-edge:#9c9067; --ruler-ink:#2b2a22;
+  --copper-hi:#e2a27a; --copper:#bf7248; --copper-lo:#8a4a2b;
+  --bond:#2c7ea0; --adh:#d9831f; --atom-o:#d6453a; --atom-h:#ffffff; --atom-c:#5d686c; --atom-stroke:#2b3437;
+  --f-display:"Barlow Semi Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"Source Sans 3","Segoe UI",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e1517; --surface:#162125; --surface-2:#1b282c; --ink:#e3ebec; --muted:#97a8ac; --line:#2b3a3e;
+  --accent:#5fbfd7; --accent-ink:#06232b; --accent-soft:#16343c;
+  --ok:#62c98e; --ok-soft:#173326; --warn:#e6a94f; --warn-soft:#3a2c12; --bad:#f08b80;
+  --scene:#1a2528; --towel:#253134; --towel-line:#2e3c3f; --towel-wet:#1d282b;
+  --bench:#2c3739; --bench-edge:#3a484a; --glass:rgba(160,200,210,.12); --glass-edge:#86a7ae;
+  --ruler:rgba(255,248,210,.55); --ruler-edge:#c9bb85; --ruler-ink:#1f1e18;
+  --bond:#5fbfd7; --adh:#f0a246; --atom-o:#ef6a5e; --atom-h:#f4f6f6; --atom-c:#8d999d; --atom-stroke:#0b1113;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1517; --surface:#162125; --surface-2:#1b282c; --ink:#e3ebec; --muted:#97a8ac; --line:#2b3a3e;
+  --accent:#5fbfd7; --accent-ink:#06232b; --accent-soft:#16343c;
+  --ok:#62c98e; --ok-soft:#173326; --warn:#e6a94f; --warn-soft:#3a2c12; --bad:#f08b80;
+  --scene:#1a2528; --towel:#253134; --towel-line:#2e3c3f; --towel-wet:#1d282b;
+  --bench:#2c3739; --bench-edge:#3a484a; --glass:rgba(160,200,210,.12); --glass-edge:#86a7ae;
+  --ruler:rgba(255,248,210,.55); --ruler-edge:#c9bb85; --ruler-ink:#1f1e18;
+  --bond:#5fbfd7; --adh:#f0a246; --atom-o:#ef6a5e; --atom-h:#f4f6f6; --atom-c:#8d999d; --atom-stroke:#0b1113;
+  color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:.01em}
+h1{font-size:clamp(28px,4vw,40px);font-weight:700}
+h2{font-size:24px;font-weight:700}
+h3{font-size:18px;font-weight:600}
+p{margin:0}
+.eyebrow{font-family:var(--f-display);font-weight:600;text-transform:uppercase;letter-spacing:.12em;font-size:13px;color:var(--accent)}
+header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px}
+header .sub{color:var(--muted);max-width:62ch;margin-top:4px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+.tab{font:600 17px var(--f-display);background:none;border:0;border-bottom:3px solid transparent;color:var(--muted);padding:8px 14px 9px;cursor:pointer;margin-bottom:-1px}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.tab small{display:block;font:400 13px var(--f-body);color:var(--muted)}
+.station{display:flex;flex-direction:column;gap:18px}
+.bench{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:880px){.bench{grid-template-columns:minmax(0,1fr)}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;min-width:0}
+.scene{padding:0;overflow:hidden;position:relative}
+.scene svg{display:block;width:100%;height:auto;background:var(--scene);touch-action:none;user-select:none;-webkit-user-select:none}
+.scene-bar{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;align-items:center;padding:10px 14px;border-top:1px solid var(--line);font-size:14px;color:var(--muted)}
+.scene-bar b{color:var(--ink);font-weight:600}
+.panel{display:flex;flex-direction:column;gap:14px}
+.label{font:600 12px var(--f-display);text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:6px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:7px;font:600 15px var(--f-body);padding:6px 11px;border-radius:999px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);cursor:pointer}
+.chip .sw{width:12px;height:12px;border-radius:50%;border:1px solid rgba(0,0,0,.25)}
+.chip[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent)}
+.chip .tick{color:var(--ok);font-weight:700}
+button{font-family:var(--f-body)}
+.btn{font:600 16px var(--f-body);padding:10px 16px;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);cursor:pointer}
+.btn.big{font-size:18px;padding:14px 18px;width:100%}
+.btn.ghost{background:transparent;color:var(--accent)}
+.btn:disabled{opacity:.42;cursor:not-allowed}
+.btn.small{font-size:14px;padding:6px 10px}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.status{padding:10px 12px;border-radius:8px;background:var(--surface-2);border:1px solid var(--line);font-size:15px}
+.status.warn{background:var(--warn-soft);border-color:var(--warn)}
+.status.ok{background:var(--ok-soft);border-color:var(--ok)}
+.hint{font-size:14px;color:var(--muted)}
+kbd{font-family:var(--f-mono);font-size:12px;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 5px;background:var(--surface-2)}
+ol.steps{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;counter-reset:st}
+ol.steps li{counter-increment:st;display:grid;grid-template-columns:26px 1fr;gap:8px;font-size:15px;color:var(--muted);align-items:start}
+ol.steps li::before{content:counter(st);width:22px;height:22px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;font:600 12px var(--f-mono);margin-top:1px}
+ol.steps li.now{color:var(--ink);font-weight:600}
+ol.steps li.now::before{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+ol.steps li.done{color:var(--muted)}
+ol.steps li.done::before{content:"✓";background:var(--ok-soft);color:var(--ok);border-color:var(--ok)}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:15px;min-width:560px}
+th,td{border-bottom:1px solid var(--line);padding:8px 8px;text-align:center;vertical-align:middle}
+th{font:600 13px var(--f-display);text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+td:first-child,th:first-child{text-align:left}
+td.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.cell{display:flex;flex-direction:column;align-items:center;gap:3px}
+input.num{width:76px;font:600 15px var(--f-mono);text-align:center;padding:6px 4px;border-radius:6px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);font-variant-numeric:tabular-nums}
+input.num:disabled{opacity:.45}
+input.num.ok{border-color:var(--ok);background:var(--ok-soft)}
+input.num.warn{border-color:var(--warn);background:var(--warn-soft)}
+.note{font-size:12px;line-height:1.25;max-width:150px}
+.note.ok{color:var(--ok)} .note.warn{color:var(--warn)}
+.row-head{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center;margin-bottom:10px}
+.entry{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center}
+.entry label{font-size:15px;font-weight:600}
+.entry .unit{font-size:14px;color:var(--muted)}
+.fb{font-size:13px;margin-top:-4px}
+.fb.ok{color:var(--ok)} .fb.warn{color:var(--warn)}
+.clock{font:600 26px var(--f-mono);font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.clockbox{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:8px;border:1px solid var(--line);background:var(--surface-2)}
+.zoom{position:absolute;right:max(10px,env(safe-area-inset-right,0px));top:10px;display:flex;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:4px}
+.zoom button{font:600 16px var(--f-mono);min-width:34px;height:32px;border:0;border-radius:6px;background:var(--surface-2);color:var(--ink);cursor:pointer}
+.zoom span{font:600 13px var(--f-mono);align-self:center;padding:0 6px;color:var(--muted)}
+.particles{position:relative}
+.particles canvas{display:block;width:100%;height:auto;border-radius:8px;background:var(--surface-2);border:1px solid var(--line)}
+.lock{display:flex;gap:14px;align-items:center;padding:18px;border:1px dashed var(--line);border-radius:8px;background:var(--surface-2);color:var(--muted)}
+.lock svg{flex:none}
+.pgrid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:880px){.pgrid{grid-template-columns:minmax(0,1fr)}}
+.legend{display:flex;flex-direction:column;gap:6px;font-size:14px}
+.legend i{display:inline-block;width:22px;height:0;border-top:3px solid;vertical-align:middle;margin-right:6px}
+.lookfor{background:var(--accent-soft);border-radius:8px;padding:12px;font-size:15px}
+.lookfor ul{margin:6px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
+.toggle{display:flex;align-items:center;gap:8px;font-size:15px}
+footer{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center;color:var(--muted);font-size:14px}
+.teacher{background:var(--warn-soft);border:1px solid var(--warn);border-radius:8px;padding:10px 12px;font-size:14px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow">Unit C.3 · Lesson 2 · Digital stations</div>
+      <h1>Water Property Lab</h1>
+      <p class="sub">Collect the same data you would at the lab bench. Count drops on a penny for four liquids, then measure how high each one climbs a glass capillary tube.</p>
+    </div>
+    <div class="hint">Liquids are tinted so you can see them.</div>
+  </header>
+  <div id="teacherBanner" class="teacher" hidden></div>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab" role="tab" id="tab-s1" aria-controls="s1" aria-selected="true">Station 1<small>Stickiness to itself</small></button>
+    <button class="tab" role="tab" id="tab-s2" aria-controls="s2" aria-selected="false">Station 2<small>Stickiness to other things</small></button>
+  </nav>
+
+  <!-- ================= STATION 1 ================= -->
+  <section class="station" id="s1" role="tabpanel" aria-labelledby="tab-s1">
+    <div class="bench">
+      <div class="card scene">
+        <svg id="pennySvg" viewBox="0 0 600 380" aria-label="Side view of a penny on a paper towel with a pipette above it"></svg>
+        <div class="scene-bar"><span id="s1Where"></span><span id="s1State"></span></div>
+      </div>
+      <div class="panel">
+        <div class="card panel">
+          <div><div class="label">Liquid</div><div class="chips" id="s1Liquids"></div></div>
+          <div><div class="label">Penny (group member)</div><div class="chips" id="s1Members"></div></div>
+          <button class="btn big" id="dropBtn">Squeeze out one drop</button>
+          <div class="hint">Click the button, tap the penny, or press <kbd>Space</kbd> for each drop. <b>Count them yourself.</b> Nothing on screen keeps count for you.</div>
+          <div class="status" id="s1Status" aria-live="polite"></div>
+          <button class="btn ghost small" id="wipeBtn">Wipe this penny and start over</button>
+        </div>
+        <div class="card">
+          <h3>Procedure</h3>
+          <ol class="steps" style="margin-top:10px">
+            <li>Choose a liquid and a penny. Each penny is one group member's trial.</li>
+            <li>Add drops one at a time and count every drop that stays on the penny.</li>
+            <li>When the liquid spills over the edge, stop. Don't count the drop that made it spill.</li>
+            <li>Record your count in the data table. Do 4 pennies for each liquid.</li>
+            <li>Calculate the average for each liquid.</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row-head"><h2>Station 1 data: drops on a penny</h2><button class="btn ghost small" id="copy1">Copy table</button></div>
+      <div class="tablewrap"><table id="t1"></table></div>
+      <p class="hint" style="margin-top:8px">Average = (sum of the 4 counts) ÷ 4. Round to one decimal place.</p>
+    </div>
+
+    <div class="card particles" id="p1card">
+      <div class="row-head"><h2>Zoom in: molecules in the drop</h2></div>
+      <div id="p1lock" class="lock">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+        <div><b>Data first.</b> The molecular view unlocks once your table has averages for all four liquids. <span id="p1prog"></span></div>
+      </div>
+      <div id="p1body" class="pgrid" hidden>
+        <canvas id="p1canvas" width="640" height="300" aria-label="Particle model of liquid molecules sitting on a penny"></canvas>
+        <div class="panel">
+          <div class="chips" id="p1Liquids"></div>
+          <label class="toggle"><input type="checkbox" id="p1charge"> Show partial charges (δ+ / δ−)</label>
+          <label class="toggle"><input type="checkbox" id="p1pull" checked> Show the pull on surface molecules</label>
+          <div class="legend">
+            <span><i style="border-color:var(--bond)"></i>attraction between liquid molecules (thicker = stronger)</span>
+            <span><i style="border-color:var(--accent)"></i>net pull on a surface molecule (arrow)</span>
+          </div>
+          <div class="lookfor"><b>Look for</b><ul>
+            <li>Compare the attraction lines between molecules for each liquid. Which liquid's molecules hold on to each other most strongly?</li>
+            <li>Which way are the molecules at the surface pulled?</li>
+            <li>Turn on partial charges. How might they explain the differences?</li>
+          </ul></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= STATION 2 ================= -->
+  <section class="station" id="s2" role="tabpanel" aria-labelledby="tab-s2" hidden>
+    <div class="bench">
+      <div class="card scene">
+        <svg id="capSvg" viewBox="-15 -5 160 160" aria-label="Front view of a beaker of liquid with a capillary tube and a clear ruler"></svg>
+        <div class="zoom" aria-label="Zoom controls">
+          <button id="zOut" aria-label="Zoom out">−</button><span id="zLvl">1×</span><button id="zIn" aria-label="Zoom in">+</button><button id="zReset" aria-label="Reset view" style="font-size:13px;padding:0 8px">Reset</button>
+        </div>
+        <div class="scene-bar"><span><b>Drag the ruler</b> to line it up. Zoom in (or double-click a spot) to read to the nearest mm, then drag the background to look around.</span></div>
+      </div>
+      <div class="panel">
+        <div class="card panel">
+          <div><div class="label">Liquid</div><div class="chips" id="s2Liquids"></div></div>
+          <ol class="steps" id="s2Steps">
+            <li>Measure the liquid's surface from the bottom of the beaker. Record <b>Height A</b>.</li>
+            <li>Put a clean capillary tube into the liquid at an angle.</li>
+            <li>Wait 30 seconds.</li>
+            <li>Rotate the tube until it's vertical. Wait 10 seconds.</li>
+            <li>Measure the top of the liquid in the tube (bottom of the meniscus) from the bottom of the beaker. Record <b>Height B</b>.</li>
+            <li>Calculate capillary rise = B − A.</li>
+            <li>Discard the tube.</li>
+          </ol>
+          <div class="entry"><label for="inA">Height A</label><input class="num" id="inA" inputmode="decimal" autocomplete="off"><span class="unit">mm</span></div>
+          <div class="fb" id="fbA"></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn" id="insertBtn">Insert tube at an angle</button>
+            <button class="btn" id="rotateBtn">Rotate to vertical</button>
+          </div>
+          <div class="clockbox"><div><div class="label" style="margin:0">Lab timer</div><div class="hint" id="clockNote">Starts when the tube goes in</div></div><div class="clock" id="clock">0:00</div></div>
+          <div class="entry"><label for="inB">Height B</label><input class="num" id="inB" inputmode="decimal" autocomplete="off"><span class="unit">mm</span></div>
+          <div class="fb" id="fbB"></div>
+          <div class="entry"><label for="inR">Capillary rise (B − A)</label><input class="num" id="inR" inputmode="decimal" autocomplete="off"><span class="unit">mm</span></div>
+          <div class="fb" id="fbR"></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn" id="discardBtn">Discard tube</button>
+            <button class="btn ghost small" id="redoBtn">Redo this liquid</button>
+          </div>
+          <div class="status" id="s2Status" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row-head"><h2>Station 2 data: capillary rise</h2><button class="btn ghost small" id="copy2">Copy table</button></div>
+      <div class="tablewrap"><table id="t2"></table></div>
+      <p class="hint" style="margin-top:8px">Read the ruler to the nearest whole millimeter. Readings are checked to within ±1 mm.</p>
+    </div>
+
+    <div class="card particles" id="p2card">
+      <div class="row-head"><h2>Zoom in: liquid meets glass</h2></div>
+      <div id="p2lock" class="lock">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+        <div><b>Data first.</b> The molecular view unlocks once you've recorded the capillary rise for all four liquids. <span id="p2prog"></span></div>
+      </div>
+      <div id="p2body" class="pgrid" hidden>
+        <canvas id="p2canvas" width="640" height="300" aria-label="Particle model of liquid molecules next to a glass wall"></canvas>
+        <div class="panel">
+          <div class="chips" id="p2Liquids"></div>
+          <label class="toggle"><input type="checkbox" id="p2charge"> Show partial charges (δ+ / δ−)</label>
+          <div class="legend">
+            <span><i style="border-color:var(--bond)"></i>cohesion: liquid molecule ↔ liquid molecule</span>
+            <span><i style="border-color:var(--adh)"></i>adhesion: liquid molecule ↔ glass surface</span>
+          </div>
+          <div class="lookfor"><b>Look for</b><ul>
+            <li>The glass surface has oxygen and hydrogen atoms sticking out. Which liquid is pulled most strongly toward them?</li>
+            <li>How high does each liquid climb the glass wall?</li>
+            <li>How does that connect to your capillary rise data?</li>
+          </ul></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span>Your data is saved in this browser. Use <b>Copy table</b> to paste it into your lab sheet.</span>
+    <button class="btn ghost small" id="clearAll">Clear all my data</button>
+  </footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+/* ---------- liquid model (values tuned so ranking matches the lesson: water > alcohol > acetone > oil) ---------- */
+const LIQ = {
+  water:   {name:"Water",           color:"#4fa3d9", drops:[31,2.4], hmax:4.0, rise:[29,0.7],  tau:1.6, coh:1.00, adh:1.00, ph:150, climb:118},
+  acetone: {name:"Acetone",         color:"#a58fdc", drops:[11,1.2], hmax:2.0, rise:[10.5,0.5],tau:1.0, coh:0.38, adh:0.42, ph:82,  climb:52},
+  alcohol: {name:"Rubbing alcohol", color:"#e48aa8", drops:[15,1.5], hmax:2.6, rise:[12.5,0.5],tau:2.2, coh:0.55, adh:0.58, ph:100, climb:68},
+  oil:     {name:"Vegetable oil",   color:"#dcb52e", drops:[8,1.0],  hmax:1.6, rise:[6,0.4],   tau:7.0, coh:0.18, adh:0.20, ph:62,  climb:20}
+};
+const ORDER = ["water","acetone","alcohol","oil"];
+const TEACHER = location.hash === "#teacher";
+const LAB_SPEED = 3; // lab clock runs 3x faster than real time
+const KEY = "waterPropLab.v1";
+
+const $ = id => document.getElementById(id);
+const gauss = ([m,s]) => { let u=0,v=0; while(!u)u=Math.random(); while(!v)v=Math.random(); return m + s*Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); };
+const r1 = x => Math.round(x*10)/10;
+const parseNum = s => { if(s==null) return null; s=String(s).trim().replace(",","."); if(s==="") return null; const n=Number(s); return isFinite(n)?n:NaN; };
+const cssv = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+/* ---------- state ---------- */
+function fresh(){
+  const s = {tab:"s1", s1:{liquid:"water", member:0, trials:{}, avg:{}}, s2:{liquid:"water", trials:{}, ruler:{x:93,y:0}, view:{cx:65,cy:75,z:1}}};
+  ORDER.forEach(k=>{ s.s1.trials[k]=[null,null,null,null]; s.s1.avg[k]=null; s.s2.trials[k]=null; });
+  return s;
+}
+let S;
+try { S = JSON.parse(localStorage.getItem(KEY)); } catch(e){ S = null; }
+if(!S || !S.s1 || !S.s2) S = fresh();
+let saveT=0;
+function save(){ clearTimeout(saveT); saveT=setTimeout(()=>{ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} },150); }
+
+if(TEACHER){
+  const b=$("teacherBanner"); b.hidden=false;
+  b.innerHTML="<b>Teacher view.</b> Hidden counts and true heights are shown, and both molecular views are unlocked. Students use the link without <code>#teacher</code>.";
+}
+
+/* ---------- tabs ---------- */
+function setTab(t){
+  S.tab=t; save();
+  ["s1","s2"].forEach(id=>{ $(id).hidden = id!==t; $("tab-"+id).setAttribute("aria-selected", id===t); });
+  if(t==="s2") renderCap();
+}
+$("tab-s1").onclick=()=>setTab("s1");
+$("tab-s2").onclick=()=>setTab("s2");
+
+function chipHTML(k, pressed, done){
+  return `<button class="chip" data-k="${k}" aria-pressed="${pressed}"><span class="sw" style="background:${LIQ[k].color}"></span>${LIQ[k].name}${done?' <span class="tick" aria-label="done">✓</span>':''}</button>`;
+}
+
+/* =====================================================================
+   STATION 1 — drops on a penny
+   ===================================================================== */
+const P = {cx:300, cy:262, R:200, ry:36, thick:20, tipY:66};
+const PXMM = P.R/9.525;
+const svg1 = $("pennySvg");
+svg1.innerHTML = `
+<defs>
+  <pattern id="towelPat" width="26" height="26" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+    <rect width="26" height="26" style="fill:var(--towel)"/>
+    <path d="M0 13H26M13 0V26" style="stroke:var(--towel-line)" stroke-width="1.2"/>
+    <circle cx="13" cy="13" r="2" style="fill:var(--towel-line)"/>
+  </pattern>
+  <linearGradient id="copTop" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" style="stop-color:var(--copper-hi)"/><stop offset=".55" style="stop-color:var(--copper)"/><stop offset="1" style="stop-color:var(--copper-lo)"/>
+  </linearGradient>
+  <linearGradient id="copSide" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" style="stop-color:var(--copper-lo)"/><stop offset=".35" style="stop-color:var(--copper)"/><stop offset="1" style="stop-color:var(--copper-lo)"/>
+  </linearGradient>
+  <linearGradient id="liqGrad" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" id="lg0" stop-opacity=".62"/><stop offset="1" id="lg1" stop-opacity=".34"/>
+  </linearGradient>
+  <linearGradient id="pipGlass" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#ffffff" stop-opacity=".25"/><stop offset=".35" stop-color="#ffffff" stop-opacity=".7"/><stop offset="1" stop-color="#ffffff" stop-opacity=".2"/>
+  </linearGradient>
+</defs>
+<rect x="0" y="0" width="600" height="380" fill="url(#towelPat)"/>
+<ellipse id="wet" cx="330" cy="290" rx="0" ry="0" style="fill:var(--towel-wet)" opacity=".95"/>
+<ellipse id="wetTint" cx="330" cy="290" rx="0" ry="0" opacity=".18"/>
+<g id="penny">
+  <ellipse cx="${P.cx}" cy="${P.cy+P.thick}" rx="${P.R}" ry="${P.ry}" fill="url(#copSide)"/>
+  <rect x="${P.cx-P.R}" y="${P.cy}" width="${2*P.R}" height="${P.thick}" fill="url(#copSide)"/>
+  <ellipse cx="${P.cx}" cy="${P.cy}" rx="${P.R}" ry="${P.ry}" fill="url(#copTop)"/>
+  <ellipse cx="${P.cx}" cy="${P.cy}" rx="${P.R-8}" ry="${P.ry-2}" fill="none" style="stroke:var(--copper-lo)" stroke-opacity=".55" stroke-width="2"/>
+  <ellipse cx="${P.cx}" cy="${P.cy}" rx="${P.R-30}" ry="${P.ry-6}" fill="none" style="stroke:var(--copper-hi)" stroke-opacity=".45" stroke-width="1.5"/>
+</g>
+<path id="spill" d="" fill-opacity=".55"/>
+<path id="dome" d="" fill="url(#liqGrad)" stroke-width="1.6" stroke-opacity=".85"/>
+<ellipse id="shine" rx="0" ry="0" fill="#ffffff" opacity=".55"/>
+<ellipse id="ripple" rx="0" ry="0" fill="none" stroke="#ffffff" stroke-width="2" opacity="0"/>
+<circle id="drop" r="0" fill-opacity=".8"/>
+<g id="pipette">
+  <path d="M276 -10 L324 -10 L322 18 L306 52 L304 ${P.tipY} L296 ${P.tipY} L294 52 L278 18 Z" fill="url(#pipGlass)" style="stroke:var(--glass-edge)" stroke-width="1.5"/>
+  <path id="pipLiq" d="M282 -10 L318 -10 L316 18 L303 48 L302 ${P.tipY-2} L298 ${P.tipY-2} L297 48 L284 18 Z" fill-opacity=".55"/>
+</g>
+<text id="spillMsg" x="300" y="355" text-anchor="middle" style="font:700 20px var(--f-display);fill:var(--warn)" opacity="0">It spilled over the edge!</text>
+`;
+const el1 = id => svg1.querySelector("#"+id);
+
+function s1Trial(k,m){
+  let t = S.s1.trials[k][m];
+  if(!t){ t = {max: Math.max(4, Math.round(gauss(LIQ[k].drops))), added:0, spilled:false, entry:null}; S.s1.trials[k][m]=t; save(); }
+  return t;
+}
+function domeGeom(t,k){
+  const hmaxPx = LIQ[k].hmax*PXMM, Rin = P.R-6;
+  if(t.added===0) return null;
+  if(t.spilled) return {r:Rin, h:hmaxPx*0.72};
+  const f = Math.min(1, t.added/t.max), s=0.14;
+  if(f<s){ const r = Rin*(0.32+0.68*f/s); return {r, h:hmaxPx*0.22*(r/Rin)}; }
+  return {r:Rin, h:hmaxPx*(0.22+0.78*Math.pow((f-s)/(1-s),0.85))};
+}
+function domeTop(g){ if(!g) return P.cy; const ryb=P.ry*g.r/P.R; return P.cy-(g.h+ryb*0.5); }
+function setDome(g, k){
+  const c = LIQ[k].color, d=el1("dome"), sh=el1("shine");
+  el1("lg0").setAttribute("stop-color",c); el1("lg1").setAttribute("stop-color",c);
+  d.setAttribute("stroke",c);
+  if(!g){ d.setAttribute("d",""); sh.setAttribute("rx",0); sh.setAttribute("ry",0); return; }
+  const ryb = P.ry*g.r/P.R, top = g.h+ryb*0.5;
+  d.setAttribute("d",`M${P.cx-g.r} ${P.cy} A${g.r} ${top} 0 0 1 ${P.cx+g.r} ${P.cy} A${g.r} ${ryb} 0 0 1 ${P.cx-g.r} ${P.cy} Z`);
+  sh.setAttribute("cx", P.cx-g.r*0.38); sh.setAttribute("cy", P.cy-top*0.62);
+  sh.setAttribute("rx", Math.max(4,g.r*0.16)); sh.setAttribute("ry", Math.max(2,top*0.16));
+}
+function setSpill(on,k,progress){
+  const c=LIQ[k].color, p = on? (progress==null?1:progress):0;
+  const wet=el1("wet"), tint=el1("wetTint");
+  [wet,tint].forEach(e=>{ e.setAttribute("rx", 250*p); e.setAttribute("ry", 62*p); });
+  tint.setAttribute("fill", c);
+  const sp=el1("spill"); sp.setAttribute("fill",c);
+  if(p>0){
+    const x0=P.cx+P.R*0.72, y0=P.cy+P.ry*0.62, y1=P.cy+P.thick+P.ry*0.85;
+    sp.setAttribute("d",`M${x0-26} ${y0-4} C${x0-10} ${y0+10} ${x0+6} ${y0+2} ${x0+22} ${y0-6} L${x0+30} ${y1} C${x0+18} ${y1+14*p} ${x0-30} ${y1+14*p} ${x0-34} ${y1} Z`);
+  } else sp.setAttribute("d","");
+  el1("spillMsg").setAttribute("opacity", on?1:0);
+}
+function setPipette(k){ el1("pipLiq").setAttribute("fill", LIQ[k].color); el1("drop").setAttribute("fill", LIQ[k].color); }
+
+let animating=false;
+function renderPenny(){
+  const k=S.s1.liquid, m=S.s1.member, t=s1Trial(k,m);
+  setPipette(k); setDome(domeGeom(t,k),k); setSpill(t.spilled,k);
+  $("s1Where").innerHTML = `<b>${LIQ[k].name}</b> · Penny ${m+1}`;
+  $("s1State").textContent = t.spilled ? "Overflowed" : (t.added? "In progress" : "Clean, dry penny");
+  const st=$("s1Status");
+  if(t.spilled){
+    st.className="status warn";
+    st.innerHTML = t.entry==null ? `This penny overflowed. Record how many drops fit <b>before</b> it spilled in the table below (Member ${m+1}, ${LIQ[k].name}).` : `Recorded: ${t.entry} drops. Pick another penny or liquid.`;
+    if(TEACHER) st.innerHTML += ` <i>(Sim count: ${t.max})</i>`;
+  } else {
+    st.className="status";
+    st.textContent = t.added ? "Keep going. Watch the dome of liquid as it grows." : "Ready. Add the first drop.";
+  }
+  $("dropBtn").disabled = t.spilled || animating;
+  $("dropBtn").textContent = t.spilled ? "Penny overflowed. Record your count." : "Squeeze out one drop";
+}
+function renderS1Chips(){
+  $("s1Liquids").innerHTML = ORDER.map(k=>chipHTML(k, k===S.s1.liquid, S.s1.avg[k]!=null && S.s1.avg[k].ok)).join("");
+  const k=S.s1.liquid;
+  $("s1Members").innerHTML = [0,1,2,3].map(m=>{
+    const t=S.s1.trials[k][m]; const done=t&&t.entry!=null;
+    return `<button class="chip" data-m="${m}" aria-pressed="${m===S.s1.member}">Penny ${m+1}${done?' <span class="tick">✓</span>':''}</button>`;
+  }).join("");
+}
+$("s1Liquids").addEventListener("click",e=>{ const b=e.target.closest(".chip"); if(!b||animating) return; S.s1.liquid=b.dataset.k;
+  const tr=S.s1.trials[S.s1.liquid]; let m=tr.findIndex(t=>!t||t.entry==null); S.s1.member = m<0?0:m; save(); refreshS1(); });
+$("s1Members").addEventListener("click",e=>{ const b=e.target.closest(".chip"); if(!b||animating) return; S.s1.member=+b.dataset.m; save(); refreshS1(); });
+
+function addDrop(){
+  if(animating) return;
+  const k=S.s1.liquid, m=S.s1.member, t=s1Trial(k,m);
+  if(t.spilled) return;
+  animating=true; $("dropBtn").disabled=true;
+  const drop=el1("drop"), rip=el1("ripple");
+  const g0=domeGeom(t,k), targetY=domeTop(g0);
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const T_FORM=reduce?30:110, T_FALL=reduce?30:Math.min(190, 60+(targetY-P.tipY)*0.7), T_RIP=reduce?30:100;
+  const start=performance.now();
+  drop.setAttribute("cx",P.cx);
+  function frame(now){
+    const el=now-start;
+    if(el<T_FORM){ const s=el/T_FORM; drop.setAttribute("r",7.5*s); drop.setAttribute("cy",P.tipY+7.5*s); }
+    else if(el<T_FORM+T_FALL){ const s=(el-T_FORM)/T_FALL; drop.setAttribute("r",7.5); drop.setAttribute("cy",P.tipY+7.5+(targetY-P.tipY-7.5)*s*s); }
+    else if(el<T_FORM+T_FALL+T_RIP){
+      if(drop.getAttribute("r")!=="0"){ drop.setAttribute("r",0); land(); }
+      const s=(el-T_FORM-T_FALL)/T_RIP; const g=domeGeom(t,k);
+      rip.setAttribute("cx",P.cx); rip.setAttribute("cy",domeTop(g)+3); rip.setAttribute("rx",8+50*s); rip.setAttribute("ry",2+6*s); rip.setAttribute("opacity",(1-s)*0.8);
+    } else { rip.setAttribute("opacity",0); if(drop.getAttribute("r")!=="0"){drop.setAttribute("r",0); land();} animating=false; renderPenny(); return; }
+    requestAnimationFrame(frame);
+  }
+  function land(){
+    t.added++;
+    if(t.added>t.max){ t.spilled=true; save(); spillAnim(); }
+    else { save(); setDome(domeGeom(t,k),k); $("s1State").textContent="In progress"; }
+  }
+  requestAnimationFrame(frame);
+}
+function spillAnim(){
+  const k=S.s1.liquid, t=s1Trial(k,S.s1.member); const st=performance.now();
+  const hmaxPx=LIQ[k].hmax*PXMM, Rin=P.R-6;
+  (function f(now){ const s=Math.min(1,(now-st)/600);
+    setDome({r:Rin,h:hmaxPx*(1-0.28*s)},k); setSpill(true,k,s); if(s<1) requestAnimationFrame(f); else { renderPenny(); renderT1(); renderS1Chips(); }
+  })(st);
+}
+$("dropBtn").onclick=addDrop;
+svg1.addEventListener("click",addDrop);
+document.addEventListener("keydown",e=>{
+  if(e.code!=="Space"||S.tab!=="s1") return;
+  const tg=e.target; if(tg && (tg.tagName==="INPUT"||tg.tagName==="BUTTON"||tg.tagName==="TEXTAREA"||tg.tagName==="SELECT")) return;
+  e.preventDefault(); if(!e.repeat) addDrop();
+});
+const wipeBtn=$("wipeBtn"); let wipeArm=0;
+wipeBtn.onclick=()=>{
+  if(animating) return;
+  const k=S.s1.liquid,m=S.s1.member,t=S.s1.trials[k][m];
+  if(t && t.entry!=null && !wipeArm){ wipeArm=1; wipeBtn.textContent="This clears your recorded count. Click again to confirm."; setTimeout(()=>{wipeArm=0;wipeBtn.textContent="Wipe this penny and start over";},4000); return; }
+  wipeArm=0; wipeBtn.textContent="Wipe this penny and start over";
+  S.s1.trials[k][m]=null; S.s1.avg[k]=null; save(); refreshS1();
+};
+
+/* ---- Station 1 table ---- */
+function renderT1(){
+  let h = `<thead><tr><th>Liquid</th><th>Member 1</th><th>Member 2</th><th>Member 3</th><th>Member 4</th><th>Average</th></tr></thead><tbody>`;
+  ORDER.forEach(k=>{
+    h += `<tr><td><span class="chip" style="cursor:default;padding:3px 9px"><span class="sw" style="background:${LIQ[k].color}"></span>${LIQ[k].name}</span></td>`;
+    for(let m=0;m<4;m++){
+      const t=S.s1.trials[k][m]; const can = t && t.spilled;
+      let cls="", note="";
+      if(t && t.entry!=null){
+        if(t.entry===t.max){ cls="ok"; note=`<span class="note ok">✓ matches</span>`; }
+        else { cls="warn"; note=`<span class="note warn">The sim counted ${t.max}. Recount carefully next time.</span>`; }
+      } else if(TEACHER && t && t.spilled){ note=`<span class="note">(${t.max})</span>`; }
+      h += `<td><div class="cell"><input class="num ${cls}" id="c1-${k}-${m}" data-k="${k}" data-m="${m}" ${can?"":"disabled"} value="${t&&t.entry!=null?t.entry:""}" placeholder="${can?"":"–"}" inputmode="numeric" aria-label="${LIQ[k].name} member ${m+1} drops">${note}</div></td>`;
+    }
+    const all = S.s1.trials[k].every(t=>t&&t.entry!=null);
+    const a=S.s1.avg[k]; let acls="",anote="";
+    if(a){ if(a.ok){acls="ok";anote=`<span class="note ok">✓</span>`;} else {acls="warn";anote=`<span class="note warn">Check: add the 4 counts, then ÷ 4</span>`;} }
+    h += `<td><div class="cell"><input class="num ${acls}" id="a1-${k}" data-avg="${k}" ${all?"":"disabled"} value="${a?a.v:""}" inputmode="decimal" aria-label="${LIQ[k].name} average">${anote}</div></td></tr>`;
+  });
+  $("t1").innerHTML = h+"</tbody>";
+  updateP1Lock();
+}
+$("t1").addEventListener("change",e=>{
+  const inp=e.target; if(!inp.matches("input")) return;
+  const v=parseNum(inp.value);
+  if(inp.dataset.avg){
+    const k=inp.dataset.avg;
+    if(v==null||isNaN(v)){ S.s1.avg[k]=null; }
+    else { const ents=S.s1.trials[k].map(t=>t.entry); const mean=ents.reduce((a,b)=>a+b,0)/4; S.s1.avg[k]={v, ok: Math.abs(v-mean)<=0.051}; }
+  } else {
+    const k=inp.dataset.k, m=+inp.dataset.m, t=S.s1.trials[k][m];
+    if(v==null||isNaN(v)) t.entry=null; else t.entry=Math.round(v);
+    S.s1.avg[k]=null;
+  }
+  save(); renderT1(); renderS1Chips(); renderPenny();
+  const nxt=document.getElementById(inp.id); if(nxt) {/* keep focus flow natural */}
+});
+function refreshS1(){ renderS1Chips(); renderPenny(); renderT1(); }
+
+/* =====================================================================
+   STATION 2 — capillary rise
+   ===================================================================== */
+const G = {bench:150, inBottom:146, wallL:21.5, wallR:88.5, rimY:55, tubeX:76, tubeLen:100, depth:6, rulerZero:147.5};
+const svg2 = $("capSvg");
+svg2.innerHTML = `
+<defs>
+  <linearGradient id="glassG" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0" stop-color="#ffffff" stop-opacity=".28"/><stop offset=".12" stop-color="#ffffff" stop-opacity=".05"/><stop offset=".85" stop-color="#ffffff" stop-opacity=".05"/><stop offset="1" stop-color="#ffffff" stop-opacity=".3"/>
+  </linearGradient>
+</defs>
+<rect id="bgHit" x="-400" y="-400" width="1000" height="1000" style="fill:var(--scene)"/>
+<rect x="-400" y="${G.bench}" width="1000" height="400" style="fill:var(--bench)"/>
+<line x1="-400" x2="600" y1="${G.bench}" y2="${G.bench}" style="stroke:var(--bench-edge)" stroke-width=".6"/>
+<g id="beakerBack">
+  <path d="M19.5 53 L20 ${G.bench} L90 ${G.bench} L90.5 53 Z" style="fill:var(--glass)"/>
+</g>
+<g id="liquid2"></g>
+<g id="tube2"></g>
+<g id="beakerFront">
+  <path d="M18.5 52.5 Q20 53 20 55 L20 ${G.bench-1} Q20 ${G.bench} 21 ${G.bench} L89 ${G.bench} Q90 ${G.bench} 90 ${G.bench-1} L90 55 Q90 53 91.5 52.5" fill="none" style="stroke:var(--glass-edge)" stroke-width=".55"/>
+  <path d="M${G.wallL} 55 L${G.wallL} ${G.inBottom} L${G.wallR} ${G.inBottom} L${G.wallR} 55" fill="none" style="stroke:var(--glass-edge)" stroke-width=".25" stroke-opacity=".7"/>
+  <rect x="20" y="55" width="70" height="${G.bench-55}" fill="url(#glassG)"/>
+  <g id="grads" style="stroke:var(--glass-edge);fill:var(--glass-edge)" stroke-width=".35"></g>
+</g>
+<g id="ruler2" style="cursor:grab"></g>
+`;
+const el2 = id => svg2.querySelector("#"+id);
+// beaker graduations (approximate, like a real beaker)
+(function(){
+  let g=""; for(let v=50; v<=250; v+=50){ const y=G.inBottom - v/250*90*0.9; g+=`<line x1="24" x2="31" y1="${y}" y2="${y}"/><text x="32.5" y="${y+1.2}" style="font:3.2px var(--f-mono);stroke:none">${v}</text>`; }
+  g+=`<text x="24" y="${G.inBottom-90*0.9-6}" style="font:3px var(--f-mono);stroke:none">mL ≈</text>`;
+  el2("grads").innerHTML=g;
+})();
+// ruler (clear plastic, 0 mark 2.5 mm from the end)
+(function(){
+  let r=`<rect x="0" y="0" width="22" height="150" rx="1" style="fill:var(--ruler);stroke:var(--ruler-edge)" stroke-width=".35"/>`;
+  for(let k=0;k<=140;k++){ const y=G.rulerZero-k; const len = k%10===0?6.5:(k%5===0?4.5:2.8);
+    r+=`<line x1="0" x2="${len}" y1="${y}" y2="${y}" style="stroke:var(--ruler-ink)" stroke-width="${k%10===0?.22:.14}"/>`;
+    if(k%10===0) r+=`<text x="${k===0?7.2:7.4}" y="${y+1.2}" style="font:600 3.4px var(--f-mono);fill:var(--ruler-ink)">${k/10}</text>`; }
+  r+=`<text x="13" y="${G.rulerZero-2}" style="font:600 2.8px var(--f-mono);fill:var(--ruler-ink)">cm</text>`;
+  r+=`<text x="18.5" y="75" transform="rotate(-90 18.5 75)" text-anchor="middle" style="font:600 3px var(--f-display);fill:var(--ruler-ink);letter-spacing:.3px">CLEAR RULER · mm</text>`;
+  el2("ruler2").innerHTML=r;
+})();
+
+function s2Trial(k){
+  let t=S.s2.trials[k];
+  if(!t){ t={A0:r1(42+Math.random()*16), rise:Math.max(2,gauss(LIQ[k].rise)), phase:"ready", tLab:0, rotT:0, settle:0, entryA:null, zeroA:null, okA:null, entryB:null, zeroB:null, okB:null, entryR:null, okR:null, msgR:""}; S.s2.trials[k]=t; save(); }
+  return t;
+}
+const surfY = t => G.inBottom - t.A0;
+const riseNow = (t,k) => t.rise*(1-Math.exp(-t.tLab/LIQ[k].tau));
+const thetaRim = t => -Math.atan2(G.tubeX - G.wallL - 0.2, (surfY(t)+G.depth) - (G.rimY+0.5));
+function tubeAngle(t){
+  if(t.phase==="angled") return thetaRim(t);
+  if(t.phase==="rotating"){ const s=Math.min(1,t.rotT/1.2); const e=s<.5?2*s*s:1-Math.pow(-2*s+2,2)/2; return thetaRim(t)*(1-e); }
+  return 0;
+}
+function renderCap(){
+  const k=S.s2.liquid, t=s2Trial(k), c=LIQ[k].color, sy=surfY(t);
+  el2("liquid2").innerHTML = `
+    <path d="M${G.wallL} ${sy-0.9} Q${G.wallL+2} ${sy} ${G.wallL+5} ${sy} L${G.wallR-5} ${sy} Q${G.wallR-2} ${sy} ${G.wallR} ${sy-0.9} L${G.wallR} ${G.inBottom} L${G.wallL} ${G.inBottom} Z" fill="${c}" fill-opacity=".34"/>
+    <path d="M${G.wallL} ${sy-0.9} Q${G.wallL+2} ${sy} ${G.wallL+5} ${sy} L${G.wallR-5} ${sy} Q${G.wallR-2} ${sy} ${G.wallR} ${sy-0.9}" fill="none" stroke="${c}" stroke-width=".35"/>`;
+  // tube
+  const tb=el2("tube2");
+  if(t.phase==="ready"||t.phase==="done"){ tb.innerHTML=""; }
+  else {
+    const th=tubeAngle(t), h=riseNow(t,k), len=(G.depth+h)/Math.cos(th);
+    const bx=G.tubeX, by=sy+G.depth;
+    tb.innerHTML = `<g transform="translate(${bx} ${by}) rotate(${th*180/Math.PI})">
+      <rect x="-0.78" y="${-G.tubeLen}" width="1.56" height="${G.tubeLen}" rx=".3" style="fill:var(--glass);stroke:var(--glass-edge)" stroke-width=".12"/>
+      <path d="M-0.5 0 L-0.5 ${-len-0.4} Q0 ${-len+0.4} 0.5 ${-len-0.4} L0.5 0 Z" fill="${c}" fill-opacity=".85"/>
+      <path d="M-0.5 ${-len-0.4} Q0 ${-len+0.4} 0.5 ${-len-0.4}" fill="none" stroke="${c}" stroke-width=".12" style="filter:brightness(.6)"/>
+      <line x1="-0.62" x2="-0.62" y1="${-G.tubeLen+1}" y2="-1" stroke="#ffffff" stroke-opacity=".6" stroke-width=".12"/>
+    </g>`;
+  }
+  // ruler
+  el2("ruler2").setAttribute("transform",`translate(${S.s2.ruler.x} ${S.s2.ruler.y})`);
+  applyView();
+  renderS2Panel();
+}
+/* view (zoom/pan) */
+const ZL=[1,2,4,8,16];
+function applyView(){
+  const v=S.s2.view, w=160/v.z;
+  svg2.setAttribute("viewBox",`${v.cx-w/2} ${v.cy-w/2} ${w} ${w}`);
+  $("zLvl").textContent=v.z+"×";
+}
+function zoomTo(z, cx, cy){ const v=S.s2.view; v.z=z; if(cx!=null){v.cx=cx;v.cy=cy;} clampView(); applyView(); save(); }
+function clampView(){ const v=S.s2.view; if(v.z===1){v.cx=65;v.cy=75;return;} v.cx=Math.min(170,Math.max(-40,v.cx)); v.cy=Math.min(180,Math.max(-30,v.cy)); }
+$("zIn").onclick=()=>{ const v=S.s2.view, i=ZL.indexOf(v.z); if(i>=ZL.length-1) return; if(v.z===1){ const t=s2Trial(S.s2.liquid); const fy = t.phase==="settled"||t.phase==="vertical" ? surfY(t)-riseNow(t,S.s2.liquid) : surfY(t); zoomTo(ZL[i+1], (G.tubeX+S.s2.ruler.x+11)/2, fy); } else zoomTo(ZL[i+1]); };
+$("zOut").onclick=()=>{ const i=ZL.indexOf(S.s2.view.z); if(i>0) zoomTo(ZL[i-1]); };
+$("zReset").onclick=()=>zoomTo(1,65,75);
+svg2.addEventListener("dblclick",e=>{ const p=svgPt(e); const i=ZL.indexOf(S.s2.view.z); zoomTo(ZL[Math.min(ZL.length-1,i+1)],p.x,p.y); });
+function svgPt(e){ const pt=svg2.createSVGPoint(); pt.x=e.clientX; pt.y=e.clientY; return pt.matrixTransform(svg2.getScreenCTM().inverse()); }
+let drag=null;
+svg2.addEventListener("pointerdown",e=>{
+  const p=svgPt(e);
+  if(e.target.closest("#ruler2")){ drag={mode:"ruler", dx:p.x-S.s2.ruler.x, dy:p.y-S.s2.ruler.y}; el2("ruler2").style.cursor="grabbing"; }
+  else drag={mode:"pan", sx:e.clientX, sy:e.clientY, cx:S.s2.view.cx, cy:S.s2.view.cy, scale:(160/S.s2.view.z)/svg2.getBoundingClientRect().width};
+  svg2.setPointerCapture(e.pointerId); e.preventDefault();
+});
+svg2.addEventListener("pointermove",e=>{
+  if(!drag) return;
+  if(drag.mode==="ruler"){ const p=svgPt(e); S.s2.ruler.x=Math.max(-30,Math.min(150,p.x-drag.dx)); S.s2.ruler.y=Math.max(-60,Math.min(60,p.y-drag.dy)); el2("ruler2").setAttribute("transform",`translate(${S.s2.ruler.x} ${S.s2.ruler.y})`); }
+  else { if(S.s2.view.z===1) return; S.s2.view.cx=drag.cx-(e.clientX-drag.sx)*drag.scale; S.s2.view.cy=drag.cy-(e.clientY-drag.sy)*drag.scale; clampView(); applyView(); }
+});
+const endDrag=()=>{ if(drag){ drag=null; el2("ruler2").style.cursor="grab"; save(); } };
+svg2.addEventListener("pointerup",endDrag); svg2.addEventListener("pointercancel",endDrag);
+// keyboard nudge for ruler (accessibility)
+svg2.setAttribute("tabindex","0");
+svg2.addEventListener("keydown",e=>{
+  const d = e.shiftKey?1:0.25; const r=S.s2.ruler; let used=true;
+  if(e.key==="ArrowUp") r.y-=d; else if(e.key==="ArrowDown") r.y+=d; else if(e.key==="ArrowLeft") r.x-=d; else if(e.key==="ArrowRight") r.x+=d; else used=false;
+  if(used){ e.preventDefault(); el2("ruler2").setAttribute("transform",`translate(${r.x} ${r.y})`); save(); }
+});
+
+/* panel */
+function fmtClock(s){ s=Math.floor(s); return Math.floor(s/60)+":"+String(s%60).padStart(2,"0"); }
+function renderS2Panel(){
+  const k=S.s2.liquid, t=s2Trial(k);
+  $("s2Liquids").innerHTML = ORDER.map(q=>{ const tt=S.s2.trials[q]; return chipHTML(q,q===k, tt&&tt.phase==="done"&&tt.okR); }).join("");
+  // step highlighting
+  let cur;
+  if(t.entryA==null) cur=0; else if(t.phase==="ready") cur=1; else if(t.phase==="angled") cur = t.tLab<30?2:3; else if(t.phase==="rotating"||t.phase==="vertical") cur=3;
+  else if(t.phase==="settled") cur = t.entryB==null?4:(t.entryR==null||!t.okR?5:6); else cur=7;
+  [...$("s2Steps").children].forEach((li,i)=>{ li.className = i<cur?"done":(i===cur?"now":""); });
+  // inputs
+  const inA=$("inA"), inB=$("inB"), inR=$("inR");
+  setIfNotFocused(inA, t.entryA); setIfNotFocused(inB, t.entryB); setIfNotFocused(inR, t.entryR);
+  inA.disabled = t.phase==="done"; inB.disabled = !(t.phase==="settled"); inR.disabled = !(t.phase==="settled" && t.entryB!=null);
+  inA.className="num "+(t.okA==null?"":(t.okA?"ok":"warn")); inB.className="num "+(t.okB==null?"":(t.okB?"ok":"warn")); inR.className="num "+(t.okR==null?"":(t.okR?"ok":"warn"));
+  $("insertBtn").disabled = !(t.phase==="ready" && t.entryA!=null);
+  $("rotateBtn").disabled = !(t.phase==="angled" && t.tLab>=30);
+  $("discardBtn").disabled = !(t.phase==="settled" && t.okR);
+  // feedback
+  fb("fbA", t.okA, t.fbA); fb("fbB", t.okB, t.fbB); fb("fbR", t.okR, t.fbR);
+  // clock
+  let clk=0, note="Starts when the tube goes in";
+  if(t.phase==="angled"){ clk=t.tLab; note = t.tLab<30? "Tube at an angle. Wait 30 s." : "30 s done. Rotate the tube to vertical."; }
+  else if(t.phase==="rotating"){ clk=0; note="Rotating…"; }
+  else if(t.phase==="vertical"){ clk=t.settle; note="Vertical. Wait 10 s."; }
+  else if(t.phase==="settled"){ clk=10; note="Done waiting. Measure Height B."; }
+  else if(t.phase==="done"){ note="Tube discarded."; }
+  $("clock").textContent=fmtClock(clk); $("clockNote").textContent = note + (t.phase==="angled"||t.phase==="vertical" ? " (clock runs 3× fast)" : "");
+  // status
+  const st=$("s2Status"); st.className="status";
+  if(t.phase==="done"){ st.className="status ok"; st.textContent = `${LIQ[k].name} is done. Capillary rise = ${t.entryR} mm. Pick the next liquid.`; }
+  else if(t.entryA==null) st.innerHTML="Drag the ruler next to the beaker. Line up its <b>0</b> with the inside bottom of the beaker, then read the liquid surface.";
+  else if(t.phase==="ready") st.textContent="Height A recorded. Put the capillary tube in at an angle.";
+  else if(t.phase==="angled") st.textContent="Watch the liquid move into the tube.";
+  else if(t.phase==="settled" && t.entryB==null) st.innerHTML="Zoom in on the top of the liquid in the tube. Read the <b>bottom</b> of the curved surface (the meniscus).";
+  else if(t.phase==="settled") st.textContent="Now calculate B − A.";
+  else st.textContent="Hold the tube still…";
+  if(TEACHER){ const h=riseNow(t,k); st.innerHTML += `<br><i>Teacher: A (from inside bottom) = ${t.A0.toFixed(1)} mm, true rise now = ${h.toFixed(1)} mm, ruler 0 is ${(S.s2.ruler.y+G.rulerZero-G.inBottom).toFixed(1)} mm below inside bottom.</i>`; }
+  renderT2();
+}
+function setIfNotFocused(inp,v){ if(document.activeElement!==inp) inp.value = v==null?"":v; }
+function fb(id,ok,msg){ const e=$(id); e.className="fb "+(ok==null?"":(ok?"ok":"warn")); e.textContent=msg||""; e.hidden=!msg; }
+
+$("s2Liquids").addEventListener("click",e=>{ const b=e.target.closest(".chip"); if(!b) return; S.s2.liquid=b.dataset.k; save(); renderCap(); ensureLoop(); });
+const zeroY = () => S.s2.ruler.y + G.rulerZero;
+function recordA(){
+  const k=S.s2.liquid, t=s2Trial(k), v=parseNum($("inA").value);
+  if(v==null||isNaN(v)){ t.entryA=null; t.okA=null; t.fbA=v==null?"":"Enter a number in mm."; renderS2Panel(); return; }
+  t.entryA=v; t.zeroA=zeroY();
+  const expect = zeroY()-surfY(t);
+  t.okA = Math.abs(v-expect)<=1.0;
+  const off = zeroY()-G.inBottom;
+  if(!t.okA) t.fbA = Math.abs(off)>6 ? "The ruler isn't next to the beaker yet. Drag it into place first." : "That doesn't match where the ruler is. Zoom in and read the liquid surface again.";
+  else t.fbA = Math.abs(off)>1.0 ? "Recorded. Your ruler's 0 isn't level with the inside bottom of the beaker. That's OK only if you keep the ruler exactly where it is for Height B." : "✓ Good reading.";
+  if(t.entryB!=null){ t.entryB=null;t.okB=null;t.fbB="";t.entryR=null;t.okR=null;t.fbR=""; }
+  save(); renderS2Panel();
+}
+function recordB(){
+  const k=S.s2.liquid, t=s2Trial(k), v=parseNum($("inB").value);
+  if(v==null||isNaN(v)){ t.entryB=null; t.okB=null; t.fbB=v==null?"":"Enter a number in mm."; renderS2Panel(); return; }
+  t.entryB=v; t.zeroB=zeroY();
+  const expect = zeroY() - (surfY(t)-riseNow(t,k));
+  t.okB = Math.abs(v-expect)<=1.0;
+  const moved = Math.abs(t.zeroB - (t.zeroA??t.zeroB))>0.6;
+  t.fbB = t.okB ? (moved? "Reading matches the ruler, but the ruler moved since Height A. Your rise will be off." : "✓ Good reading.") : "That doesn't match the ruler. Zoom in and read the bottom of the meniscus in the tube.";
+  t.entryR=null;t.okR=null;t.fbR="";
+  save(); renderS2Panel();
+}
+function recordR(){
+  const k=S.s2.liquid, t=s2Trial(k), v=parseNum($("inR").value);
+  if(v==null||isNaN(v)){ t.entryR=null; t.okR=null; t.fbR=v==null?"":"Enter a number in mm."; renderS2Panel(); return; }
+  t.entryR=v;
+  const diff = r1(t.entryB - t.entryA);
+  if(Math.abs(v-diff)>0.051){ t.okR=false; t.fbR=`Check your subtraction: ${t.entryB} − ${t.entryA} = ?`; }
+  else if(Math.abs(v - riseNow(t,k))>1.6){ t.okR=false; t.fbR = (t.okA&&t.okB) ? "The math is right, but this doesn't match the tube. Did the ruler move between Height A and Height B? Use Redo this liquid and keep the ruler in one place." : "The math is right, but one of your readings was off. Re-read Height A or B and record it again."; }
+  else { t.okR=true; t.fbR="✓ Capillary rise recorded. Discard the tube."; }
+  save(); renderS2Panel();
+}
+["inA","inB","inR"].forEach((id,i)=>{ const f=[recordA,recordB,recordR][i]; $(id).addEventListener("change",f); $(id).addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); f(); } }); });
+$("insertBtn").onclick=()=>{ const t=s2Trial(S.s2.liquid); if(t.phase!=="ready") return; t.phase="angled"; t.tLab=0; save(); renderCap(); ensureLoop(); };
+$("rotateBtn").onclick=()=>{ const t=s2Trial(S.s2.liquid); if(t.phase!=="angled"||t.tLab<30) return; t.phase="rotating"; t.rotT=0; save(); ensureLoop(); };
+$("discardBtn").onclick=()=>{ const t=s2Trial(S.s2.liquid); if(!(t.phase==="settled"&&t.okR)) return; t.phase="done"; save(); renderCap(); updateP2Lock(); };
+let redoArm=0;
+$("redoBtn").onclick=()=>{
+  const k=S.s2.liquid, t=s2Trial(k);
+  if(t.entryA!=null && !redoArm){ redoArm=1; $("redoBtn").textContent="Clears this liquid's readings. Click again."; setTimeout(()=>{redoArm=0;$("redoBtn").textContent="Redo this liquid";},4000); return; }
+  redoArm=0; $("redoBtn").textContent="Redo this liquid";
+  const A0=t.A0; S.s2.trials[k]=null; const n=s2Trial(k); n.A0=A0; save(); renderCap(); updateP2Lock();
+};
+/* lab clock loop */
+let loopOn=false, last=0;
+function ensureLoop(){ if(loopOn) return; loopOn=true; last=performance.now(); requestAnimationFrame(tick); }
+function tick(now){
+  const dt=Math.min(0.1,(now-last)/1000); last=now;
+  const k=S.s2.liquid, t=s2Trial(k); let active=false;
+  if(t.phase==="angled"){ t.tLab+=dt*LAB_SPEED; active=true; }
+  else if(t.phase==="rotating"){ t.tLab+=dt*LAB_SPEED; t.rotT+=dt; if(t.rotT>=1.2){ t.phase="vertical"; t.settle=0; } active=true; }
+  else if(t.phase==="vertical"){ t.tLab+=dt*LAB_SPEED; t.settle+=dt*LAB_SPEED; if(t.settle>=10){ t.settle=10; t.phase="settled"; save(); } active=true; }
+  if(active && S.tab==="s2"){ renderCap(); }
+  if(active){ if(Math.random()<0.05) save(); requestAnimationFrame(tick); } else { loopOn=false; save(); }
+}
+
+/* ---- Station 2 table ---- */
+function renderT2(){
+  let h=`<thead><tr><th>Liquid</th><th>Height A (mm)</th><th>Height B (mm)</th><th>Capillary rise B − A (mm)</th><th>Status</th></tr></thead><tbody>`;
+  ORDER.forEach(k=>{
+    const t=S.s2.trials[k];
+    const cell=(v,ok)=> v==null?"–":`<span style="color:${ok===false?"var(--warn)":"inherit"}">${v}</span>`;
+    const status = !t||t.entryA==null ? "Not started" : (t.phase==="done"?'<span style="color:var(--ok);font-weight:600">✓ Done</span>':"In progress");
+    h+=`<tr><td><span class="chip" style="cursor:default;padding:3px 9px"><span class="sw" style="background:${LIQ[k].color}"></span>${LIQ[k].name}</span></td><td class="num">${t?cell(t.entryA,t.okA):"–"}</td><td class="num">${t?cell(t.entryB,t.okB):"–"}</td><td class="num">${t&&t.phase==="done"?cell(t.entryR,t.okR):(t?cell(t.entryR,t.okR):"–")}</td><td>${status}</td></tr>`;
+  });
+  $("t2").innerHTML=h+"</tbody>";
+}
+
+/* ---- copy tables ---- */
+function copyText(txt, btn){
+  const done=()=>{ const o=btn.textContent; btn.textContent="Copied"; setTimeout(()=>btn.textContent=o,1500); };
+  const fallback=()=>{ const ta=document.createElement("textarea"); ta.value=txt; ta.style.position="fixed"; ta.style.opacity="0"; document.body.appendChild(ta); ta.select(); try{document.execCommand("copy");}catch(e){} document.body.removeChild(ta); done(); };
+  try{ navigator.clipboard.writeText(txt).then(done,fallback); }catch(e){ fallback(); }
+}
+$("copy1").onclick=e=>{ let s="Liquid\tMember 1\tMember 2\tMember 3\tMember 4\tAverage\n"; ORDER.forEach(k=>{ s+=LIQ[k].name+"\t"+S.s1.trials[k].map(t=>t&&t.entry!=null?t.entry:"").join("\t")+"\t"+(S.s1.avg[k]?S.s1.avg[k].v:"")+"\n"; }); copyText(s,e.currentTarget); };
+$("copy2").onclick=e=>{ let s="Liquid\tHeight A (mm)\tHeight B (mm)\tCapillary rise (mm)\n"; ORDER.forEach(k=>{ const t=S.s2.trials[k]; s+=LIQ[k].name+"\t"+(t&&t.entryA!=null?t.entryA:"")+"\t"+(t&&t.entryB!=null?t.entryB:"")+"\t"+(t&&t.entryR!=null?t.entryR:"")+"\n"; }); copyText(s,e.currentTarget); };
+let clearArm=0;
+$("clearAll").onclick=()=>{ if(!clearArm){ clearArm=1; $("clearAll").textContent="This erases both data tables. Click again to confirm."; setTimeout(()=>{clearArm=0;$("clearAll").textContent="Clear all my data";},4000); return; }
+  S=fresh(); try{localStorage.removeItem(KEY);}catch(e){} clearArm=0; $("clearAll").textContent="Clear all my data"; refreshS1(); renderCap(); setTab("s1"); updateP2Lock(); };
+
+/* =====================================================================
+   PARTICLE VIEWS
+   ===================================================================== */
+function s1Complete(){ return ORDER.filter(k=>S.s1.avg[k]&&S.s1.avg[k].ok).length; }
+function s2Complete(){ return ORDER.filter(k=>{const t=S.s2.trials[k]; return t&&t.phase==="done";}).length; }
+function updateP1Lock(){ const n=s1Complete(), open=TEACHER||n===4; $("p1lock").hidden=open; $("p1body").hidden=!open; $("p1prog").textContent=`(${n} of 4 done)`; if(open) P1.start(); }
+function updateP2Lock(){ const n=s2Complete(), open=TEACHER||n===4; $("p2lock").hidden=open; $("p2body").hidden=!open; $("p2prog").textContent=`(${n} of 4 done)`; if(open) P2.start(); }
+
+function seeded(i){ const x=Math.sin(i*127.1+311.7)*43758.5453; return x-Math.floor(x); }
+function drawMol(ctx,k,x,y,a,charges,C,scale){
+  scale=scale||1;
+  ctx.save(); ctx.translate(x,y); ctx.rotate(a); ctx.scale(scale,scale); ctx.lineWidth=1; ctx.strokeStyle=C.stroke;
+  const atom=(ax,ay,r,fill,halo)=>{ if(charges&&halo){ ctx.beginPath(); ctx.arc(ax,ay,r+3.5,0,7); ctx.fillStyle=halo; ctx.fill(); } ctx.beginPath(); ctx.arc(ax,ay,r,0,7); ctx.fillStyle=fill; ctx.fill(); ctx.stroke(); };
+  const neg="rgba(214,69,58,.35)", pos="rgba(60,130,220,.38)";
+  if(k==="water"){ atom(-4.6,-6.2,3.6,C.h,pos); atom(4.6,-6.2,3.6,C.h,pos); atom(0,0,6.4,C.o,neg); }
+  else if(k==="alcohol"){ atom(-6,4,4.6,C.c); atom(6,4,4.6,C.c); atom(0,-1,5,C.c); atom(0,-9,4.2,C.o,neg); atom(4.5,-12.5,2.8,C.h,pos); }
+  else if(k==="acetone"){ atom(-7,3,4.6,C.c); atom(7,3,4.6,C.c); atom(0,0,5,C.c); ctx.beginPath(); ctx.moveTo(-1.4,-4); ctx.lineTo(-1.4,-7); ctx.moveTo(1.4,-4); ctx.lineTo(1.4,-7); ctx.stroke(); atom(0,-10,4.4,C.o, charges?"rgba(214,69,58,.22)":null); }
+  else { for(let i=0;i<5;i++) atom(-11+i*5.5,(i%2?2.4:-2.4),3.3,C.c); }
+  ctx.restore();
+}
+function colors(){ return {o:cssv("--atom-o"),h:cssv("--atom-h"),c:cssv("--atom-c"),stroke:cssv("--atom-stroke"),bond:cssv("--bond"),adh:cssv("--adh"),accent:cssv("--accent"),ink:cssv("--ink"),muted:cssv("--muted"),copper:cssv("--copper"),copperHi:cssv("--copper-hi"),glass:cssv("--glass-edge"),bg:cssv("--surface-2")}; }
+function hexRGBA(hex,a){ const h=hex.replace("#",""); const n=parseInt(h.length===3?h.split("").map(c=>c+c).join(""):h,16); return `rgba(${n>>16&255},${n>>8&255},${n&255},${a})`; }
+
+function makeView(canvasId, chipsId, build, draw){
+  const cv=$(canvasId), ctx=cv.getContext("2d"); let k="water", model=null, running=false, started=false;
+  const W=640,H=300;
+  function size(){ const d=window.devicePixelRatio||1; cv.width=W*d; cv.height=H*d; ctx.setTransform(d,0,0,d,0,0); }
+  function chips(){ $(chipsId).innerHTML=ORDER.map(q=>chipHTML(q,q===k,false)).join(""); }
+  $(chipsId).addEventListener("click",e=>{ const b=e.target.closest(".chip"); if(!b) return; k=b.dataset.k; model=build(k); chips(); });
+  function loop(t){ if(!running) return; if(!cv.offsetParent){ requestAnimationFrame(loop); return; } ctx.clearRect(0,0,W,H); draw(ctx,model,k,t/1000,colors()); requestAnimationFrame(loop); }
+  return { start(){ if(started) return; started=true; size(); chips(); model=build(k); running=true; requestAnimationFrame(loop); } };
+}
+
+/* P1: cohesion in a drop on a penny */
+const P1 = makeView("p1canvas","p1Liquids",
+  function build(k){
+    const sp = k==="water"?24:28, bottom=258, x0=48, x1=592, cx=320, half=(x1-x0)/2, Hc=LIQ[k].ph;
+    const prof = x => bottom - Hc*Math.sqrt(Math.max(0,1-Math.pow((x-cx)/half,2)));
+    const pts=[]; let j=0;
+    for(let y=bottom-sp*0.5; y>bottom-Hc-5; y-=sp*0.866, j++){
+      for(let x=x0+sp*0.55+(j%2?sp/2:0); x<x1-sp*0.4; x+=sp){ if(y>prof(x)+sp*0.42) pts.push({hx:x,hy:y,ph:seeded(pts.length+1)*6.28,a:seeded(pts.length+7)*6.28}); }
+    }
+    const nb=[]; pts.forEach((p,i)=>{ p.n=0; });
+    for(let i=0;i<pts.length;i++) for(let q=i+1;q<pts.length;q++){ const d=Math.hypot(pts[i].hx-pts[q].hx,pts[i].hy-pts[q].hy); if(d<sp*1.12){ nb.push([i,q]); pts[i].n++; pts[q].n++; } }
+    pts.forEach(p=>{ p.surf = p.n<6 && p.hy<bottom-sp*0.6; });
+    let feat=null, best=1e9; pts.forEach(p=>{ if(p.surf){ const d=Math.abs(p.hx-cx); if(d<best){best=d;feat=p;} } });
+    return {pts,nb,prof,bottom,cx,sp,feat};
+  },
+  function draw(ctx,m,k,t,C){
+    const L=LIQ[k], charges=$("p1charge").checked, pull=$("p1pull").checked;
+    // penny surface
+    ctx.fillStyle=C.copper; ctx.fillRect(20,m.bottom,600,40);
+    ctx.fillStyle=C.copperHi; ctx.fillRect(20,m.bottom,600,4);
+    ctx.fillStyle=C.muted; ctx.font="600 12px "+cssv("--f-mono"); ctx.fillText("PENNY SURFACE (copper)",28,m.bottom+24);
+    // drop outline
+    ctx.beginPath(); for(let x=48;x<=592;x+=4){ const y=m.prof(x)+3; x===48?ctx.moveTo(x,m.bottom):0; ctx.lineTo(x,Math.min(y,m.bottom)); } ctx.lineTo(592,m.bottom); ctx.closePath();
+    ctx.fillStyle=hexRGBA(L.color,0.16); ctx.fill(); ctx.strokeStyle=hexRGBA(L.color,0.6); ctx.lineWidth=1.5; ctx.stroke();
+    const amp=1.2+3.2*(1-L.coh), spd=1.4+1.6*(1-L.coh);
+    const pos=m.pts.map(p=>({x:p.hx+amp*Math.sin(t*spd*1.3+p.ph), y:p.hy+amp*Math.cos(t*spd+p.ph*1.7)}));
+    // bonds
+    ctx.strokeStyle=hexRGBA(C.bond, 0.12+0.78*L.coh); ctx.lineWidth=0.5+2.6*L.coh;
+    if(L.coh<0.3) ctx.setLineDash([3,4]); else ctx.setLineDash([]);
+    ctx.beginPath(); m.nb.forEach(([a,b])=>{ ctx.moveTo(pos[a].x,pos[a].y); ctx.lineTo(pos[b].x,pos[b].y); }); ctx.stroke(); ctx.setLineDash([]);
+    // molecules
+    m.pts.forEach((p,i)=>drawMol(ctx,k,pos[i].x,pos[i].y,p.a+Math.sin(t*0.6+p.ph)*0.5,charges,C,k==="water"?0.92:0.84));
+    // surface pull arrows
+    if(pull){ ctx.strokeStyle=C.accent; ctx.fillStyle=C.accent; ctx.lineWidth=2.4;
+      m.pts.forEach((p,i)=>{ if(!p.surf) return; const dx=m.cx-p.hx, dy=(m.bottom+40)-p.hy, d=Math.hypot(dx,dy), len=8+18*L.coh;
+        const ux=dx/d, uy=dy/d, sx=pos[i].x-ux*(12+len), sy=pos[i].y-uy*(12+len), ex=sx+ux*len, ey=sy+uy*len;
+        ctx.beginPath(); ctx.moveTo(sx,sy); ctx.lineTo(ex,ey); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(ex+ux*3,ey+uy*3); ctx.lineTo(ex-ux*4-uy*4.5,ey-uy*4+ux*4.5); ctx.lineTo(ex-ux*4+uy*4.5,ey-uy*4-ux*4.5); ctx.closePath(); ctx.fill(); });
+      ctx.setLineDash([]); }
+    if(charges && m.feat && k!=="oil"){
+      const i=m.pts.indexOf(m.feat); ctx.font="700 13px "+cssv("--f-body"); ctx.fillStyle=C.ink;
+      ctx.fillText(k==="acetone"?"weak δ−":"δ−", pos[i].x+12, pos[i].y-14); ctx.fillText(k==="water"?"δ+":(k==="alcohol"?"δ+":""), pos[i].x-30, pos[i].y-14);
+    }
+    if(charges && k==="oil"){ ctx.font="600 13px "+cssv("--f-body"); ctx.fillStyle=C.ink; ctx.textAlign="right"; ctx.fillText("Oil molecules: no charged ends", 616, 24); ctx.textAlign="left"; }
+    ctx.font="700 15px "+cssv("--f-display"); ctx.fillStyle=C.ink; ctx.fillText(L.name.toUpperCase()+" · MODEL, NOT TO SCALE", 24, 24);
+  });
+
+/* P2: adhesion at a glass wall */
+const P2 = makeView("p2canvas","p2Liquids",
+  function build(k){
+    const sp=k==="water"?24:28, wall=72, flat=196, bottom=292, C=LIQ[k].climb;
+    const prof=x=> flat - C*Math.exp(-(x-wall)/115);
+    const pts=[]; let j=0;
+    for(let y=bottom-sp*0.5; y>flat-C-10; y-=sp*0.866, j++){
+      for(let x=wall+16+(j%2?sp/2:0); x<630; x+=sp){ if(y>prof(x)+sp*0.4) pts.push({hx:x,hy:y,ph:seeded(pts.length+3)*6.28,a:seeded(pts.length+11)*6.28}); }
+    }
+    const nb=[]; for(let i=0;i<pts.length;i++) for(let q=i+1;q<pts.length;q++){ const d=Math.hypot(pts[i].hx-pts[q].hx,pts[i].hy-pts[q].hy); if(d<sp*1.12) nb.push([i,q]); }
+    const sites=[]; for(let y=30;y<296;y+=22) sites.push(y);
+    const ad=[]; pts.forEach((p,i)=>{ sites.forEach(sy=>{ if(Math.hypot(p.hx-(wall+10),p.hy-sy)<38) ad.push([i,sy]); }); });
+    return {pts,nb,sites,ad,wall,prof,flat};
+  },
+  function draw(ctx,m,k,t,C){
+    const L=LIQ[k], charges=$("p2charge").checked;
+    // glass
+    ctx.fillStyle=hexRGBA(C.glass,0.35); ctx.fillRect(0,0,m.wall,300);
+    ctx.strokeStyle=hexRGBA(C.glass,0.5); ctx.lineWidth=1; for(let y=-60;y<300;y+=14){ ctx.beginPath(); ctx.moveTo(0,y+50); ctx.lineTo(m.wall-14,y); ctx.stroke(); }
+    ctx.fillStyle=C.ink; ctx.font="700 13px "+cssv("--f-display"); ctx.save(); ctx.translate(26,200); ctx.rotate(-Math.PI/2); ctx.fillText("GLASS (wall of the tube)",0,0); ctx.restore();
+    // liquid region tint
+    ctx.beginPath(); ctx.moveTo(m.wall,300); for(let x=m.wall;x<=640;x+=4) ctx.lineTo(x,m.prof(x)+2); ctx.lineTo(640,300); ctx.closePath(); ctx.fillStyle=hexRGBA(L.color,0.15); ctx.fill();
+    const amp=1.2+3.2*(1-L.coh), spd=1.4+1.6*(1-L.coh);
+    const pos=m.pts.map(p=>({x:p.hx+amp*Math.sin(t*spd*1.3+p.ph), y:p.hy+amp*Math.cos(t*spd+p.ph*1.7)}));
+    // adhesion
+    ctx.strokeStyle=hexRGBA(C.adh,0.12+0.8*L.adh); ctx.lineWidth=0.5+2.8*L.adh; if(L.adh<0.3) ctx.setLineDash([3,4]);
+    ctx.beginPath(); m.ad.forEach(([i,sy])=>{ ctx.moveTo(m.wall+9,sy); ctx.lineTo(pos[i].x,pos[i].y); }); ctx.stroke(); ctx.setLineDash([]);
+    // cohesion
+    ctx.strokeStyle=hexRGBA(C.bond,0.12+0.78*L.coh); ctx.lineWidth=0.5+2.6*L.coh; if(L.coh<0.3) ctx.setLineDash([3,4]);
+    ctx.beginPath(); m.nb.forEach(([a,b])=>{ ctx.moveTo(pos[a].x,pos[a].y); ctx.lineTo(pos[b].x,pos[b].y); }); ctx.stroke(); ctx.setLineDash([]);
+    // glass surface sites (Si–O–H)
+    m.sites.forEach(sy=>{ ctx.lineWidth=1; ctx.strokeStyle=C.stroke;
+      if(charges){ ctx.beginPath(); ctx.arc(m.wall+2,sy,7.5,0,7); ctx.fillStyle="rgba(214,69,58,.3)"; ctx.fill(); ctx.beginPath(); ctx.arc(m.wall+9,sy+3,6,0,7); ctx.fillStyle="rgba(60,130,220,.35)"; ctx.fill(); }
+      ctx.beginPath(); ctx.arc(m.wall+2,sy,4.4,0,7); ctx.fillStyle=C.o; ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.arc(m.wall+9,sy+3,2.8,0,7); ctx.fillStyle=C.h; ctx.fill(); ctx.stroke(); });
+    m.pts.forEach((p,i)=>drawMol(ctx,k,pos[i].x,pos[i].y,p.a+Math.sin(t*0.6+p.ph)*0.5,charges,C,k==="water"?0.92:0.84));
+    if(charges){ ctx.font="700 12px "+cssv("--f-body"); ctx.fillStyle=C.ink; ctx.fillText("δ− O", m.wall+14, 22); ctx.fillText("δ+ H", m.wall+14, 36); if(k==="oil"){ ctx.textAlign="right"; ctx.fillText("Oil molecules: no charged ends", 628, 44); ctx.textAlign="left"; } }
+    ctx.font="700 15px "+cssv("--f-display"); ctx.fillStyle=C.ink; ctx.textAlign="right"; ctx.fillText(L.name.toUpperCase()+" · MODEL, NOT TO SCALE", 628, 24); ctx.textAlign="left";
+  });
+
+/* ---------- boot ---------- */
+document.querySelectorAll("ol.steps li").forEach(li=>{ const sp=document.createElement("span"); while(li.firstChild) sp.appendChild(li.firstChild); li.appendChild(sp); });
+refreshS1();
+renderCap();
+updateP2Lock();
+setTab(S.tab||"s1");
+ORDER.forEach(k=>{ const t=S.s2.trials[k]; if(t&&(t.phase==="angled"||t.phase==="rotating"||t.phase==="vertical")) ensureLoop(); });
+})();
+</script>
+</body>
+</html>
